@@ -1,0 +1,12 @@
+{
+  "name": "mp-paneles-incentivos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Paneles internos MP Ascensores: calidad de tickets cerrados y seguimiento de objetivos ST 2026",
+  "scripts": {
+    "start": "serve -l ${PORT:-3000} ."
+  },
+  "dependencies": {
+    "serve": "^14.2.3"
+  }
+}
