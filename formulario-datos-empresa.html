@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dato mensual de empresa — MP Ascensores</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1c2128; --muted:#6b7280;
+    --border:#e5e7eb; --accent:#2563eb; --accent-soft:#eff6ff; --ok:#16a34a; --err:#dc2626;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:480px;margin:0 auto;padding:48px 24px;}
+  h1{font-size:19px;margin:0 0 4px;}
+  p.sub{color:var(--muted);font-size:13px;margin:0 0 24px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  label{display:block;font-size:13px;font-weight:600;margin:16px 0 6px;}
+  label:first-of-type{margin-top:0;}
+  input[type=number]{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;}
+  input[type=number]:focus{outline:none;border-color:var(--accent);}
+  .hint{font-size:12px;color:var(--muted);margin-top:4px;}
+  button{margin-top:22px;width:100%;padding:12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;}
+  button:disabled{opacity:.6;cursor:default;}
+  .tag{display:inline-block;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:2px 9px;border-radius:999px;margin-bottom:10px;}
+  #estado{margin-top:16px;font-size:13px;display:none;}
+  #estado.ok{color:var(--ok);}
+  #estado.err{color:var(--err);}
+  #formulario.enviado{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <span class="tag" id="tagMes">—</span>
+    <h1 id="titulo">Dato mensual de empresa</h1>
+    <p class="sub" id="subtitulo">Rellena los dos valores del mes cerrado indicado. Estos datos alimentan el panel de Objetivos ST 2026.</p>
+
+    <form id="formulario">
+      <label for="valorMes">Valor del mes cerrado</label>
+      <input type="number" step="any" id="valorMes" required>
+      <p class="hint" id="hintValorMes"></p>
+
+      <label for="acumulado">Acumulado desde el 1 de julio de 2026</label>
+      <input type="number" step="any" id="acumulado" required>
+      <p class="hint">Es el que cuenta para el % de consecución del semestre.</p>
+
+      <button type="submit" id="btnEnviar">Enviar dato</button>
+    </form>
+
+    <p id="estado"></p>
+  </div>
+</div>
+
+<script>
+  // ⚠️ Sustituir por la URL de producción real del Webhook de n8n (Flujo 2 - recepción)
+  const WEBHOOK_URL = 'https://mpascensores.app.n8n.cloud/webhook/objetivos-empresa-dato';
+
+  const params = new URLSearchParams(location.search);
+  const indicadorId = params.get('indicador') || '';
+  const label = params.get('label') || 'Indicador';
+  const mes = params.get('mes') || '';       // YYYY-MM
+  const mesNombre = params.get('mesNombre') || mes;
+
+  document.getElementById('tagMes').textContent = mesNombre ? `Mes cerrado: ${mesNombre}` : 'Mes cerrado';
+  document.getElementById('titulo').textContent = label;
+  document.getElementById('hintValorMes').textContent = `Dato de ${label} correspondiente solo a ${mesNombre || 'este mes'}.`;
+
+  const formulario = document.getElementById('formulario');
+  const estado = document.getElementById('estado');
+  const btn = document.getElementById('btnEnviar');
+
+  formulario.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    if (!indicadorId || !mes) {
+      estado.textContent = 'Enlace incompleto: falta el indicador o el mes en la URL. Pide que te reenvíen el correo.';
+      estado.className = 'err';
+      estado.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+
+    const payload = {
+      indicador_id: indicadorId,
+      label: label,
+      mes: mes,
+      valorMes: document.getElementById('valorMes').value,
+      acumulado: document.getElementById('acumulado').value,
+    };
+
+    // mode:'no-cors' porque el Webhook de n8n no añade cabeceras CORS por defecto;
+    // no podemos leer la respuesta, así que asumimos éxito si fetch no lanza error de red.
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      mode: 'no-cors',
+      body: JSON.stringify(payload),
+    })
+      .then(function () {
+        formulario.classList.add('enviado');
+        estado.textContent = '✅ Dato enviado. Gracias — ya puedes cerrar esta página.';
+        estado.className = 'ok';
+        estado.style.display = 'block';
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.textContent = 'Enviar dato';
+        estado.textContent = 'No se ha podido enviar. Comprueba tu conexión e inténtalo de nuevo.';
+        estado.className = 'err';
+        estado.style.display = 'block';
+      });
+  });
+</script>
+</body>
+</html>
