@@ -124,6 +124,7 @@ footer.note { font-size:11px; color:var(--text-muted); margin-top:6px; line-heig
   <span class="status-dot" id="dotStatus"></span>
   <span id="txtStatus">Iniciando…</span>
   <button onclick="cargarDatos(true)" id="i18n-refresh-btn">↻ Refrescar</button>
+  <button onclick="verEmpresa()" id="i18n-empresa-btn" style="margin-left:auto"></button>
 </div>
 
 <div class="tabs" id="periodTabs">
@@ -204,6 +205,59 @@ const CALIDAD_TICKETS_RESULTADOS = {
   },
 };
 
+// Los 3 indicadores de empresa que hoy no tienen fuente de datos en vivo (a diferencia de SLA,
+// tiempo de respuesta o Puntos, que vienen de Zendesk). Se introducen a mano desde la pestaña
+// "🏢 Datos de empresa" (ver verEmpresa()/renderEmpresa()/guardarEmpresaDatos()). De momento se
+// guardan solo en esta sesión del navegador — está en marcha, en paralelo, la automatización n8n
+// que los alimentará vía backend (/api/company-data).
+const EMPRESA_INDICADORES = [
+  { id: 'indice_de_frecuencia_accidentes_prl', label: 'Índice de frecuencia (accidentes- PRL)' },
+  { id: 'ebitda_sim_2026_k', label: 'EBITDA SIM 2026 (K€)' },
+  { id: 'facturacion_servicenter_2026_m', label: 'Facturación Servicenter 2026 (m€)' },
+];
+let EMPRESA_DATOS = {
+  indice_de_frecuencia_accidentes_prl: { mesLabel: null, mesYYYYMM: null, mesCerrado: null, acumuladoSemestre: null },
+  ebitda_sim_2026_k: { mesLabel: null, mesYYYYMM: null, mesCerrado: null, acumuladoSemestre: null },
+  facturacion_servicenter_2026_m: { mesLabel: null, mesYYYYMM: null, mesCerrado: null, acumuladoSemestre: null },
+};
+
+// Carga automática desde la automatización n8n (Automatizaciones_n8n/Objetivos_Empresa_Automatizacion):
+// cada respuesta de formulario queda guardada en GET /api/company-data, servido por el mismo backend
+// que sirve este HTML (mismo origen, por eso la ruta es relativa). Si la API no responde (redeploy en
+// marcha, o un indicador que todavía no tiene ningún dato), el panel sigue funcionando con lo que ya
+// hubiera en EMPRESA_DATOS (edición manual de esta sesión, o "—").
+const MESES_ES_L = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const MESES_EN_L = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+function formatMesYYYYMM(yyyymm) {
+  if (!yyyymm || !/^\d{4}-\d{2}$/.test(yyyymm)) return null;
+  const [y, m] = yyyymm.split('-').map(Number);
+  const nombres = LANG === 'en' ? MESES_EN_L : MESES_ES_L;
+  return `${nombres[m - 1]} ${y}`;
+}
+async function cargarEmpresaDatos() {
+  try {
+    const res = await fetch('/api/company-data', { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    EMPRESA_INDICADORES.forEach(({ id }) => {
+      const ind = data[id];
+      if (!ind || !ind.ultimoMes || !ind.historico || !ind.historico[ind.ultimoMes]) return;
+      const dato = ind.historico[ind.ultimoMes];
+      EMPRESA_DATOS[id] = {
+        mesLabel: (EMPRESA_DATOS[id] && EMPRESA_DATOS[id].mesLabel) || null,
+        mesYYYYMM: ind.ultimoMes,
+        mesCerrado: dato.valorMes,
+        acumuladoSemestre: dato.acumulado,
+      };
+    });
+    render();
+  } catch (e) {
+    // Sin conexión con la API de datos de empresa: se deja lo que ya hubiera.
+  }
+}
+let empresaEditMode = false;
+let empresaLastSaved = null;
+
 // ============================================================
 // i18n — selector de idioma ES/EN (a petición de Fernando, 11 ago 2026, misma idea que en el
 // artefacto "calidad-tickets-mp"). Traduce los textos fijos de la interfaz y las etiquetas de los
@@ -224,6 +278,7 @@ const INDICATOR_LABEL_EN = {
   "Tiempo medio respuestas clientes tipo 1 y tipo 2": "Average response time to Type 1 and Type 2 customers",
   "Objetivo Guía de Problemas": "Problem Guide objective",
   "Tratamiento y servicio clientes Tipo 3": "Type 3 customer handling and service",
+  "EBITDA SIM 2026 (K€)": "EBITDA SIM 2026 (K€)",
 };
 function trLabel(labelEs){
   if(LANG==='en' && INDICATOR_LABEL_EN[labelEs]) return INDICATOR_LABEL_EN[labelEs];
@@ -237,8 +292,8 @@ const I18N = {
     refreshBtn: "↻ Refrescar",
     loading: "Cargando…",
     tabs: { last_week: "Semana pasada", current_month: "Mes actual", last_month: "Último mes cerrado", year: "Acumulado año" },
-    periodNote: 'Estos períodos aplican solo a SLA y tiempo de respuesta (son de referencia; "Acumulado año" incluye datos de antes del 1 de julio de 2026, útil para ver la tendencia pero no forma parte del cálculo de objetivos del semestre). El indicador de Puntos NO usa esta pestaña: siempre se calcula acumulado desde el 1 de julio de 2026 (inicio de este semestre de objetivos), sea cual sea el período seleccionado arriba — a partir del 3er mes del semestre (septiembre en adelante) este panel no puede acumularlo con exactitud sin el endpoint de rango del backend y lo marca como "no disponible" en vez de mostrar un número parcial o incorrecto.',
-    footer: 'Fuente en vivo: API Zendesk/n8n en Railway (puntos, SLA Tipo 1/2, tiempo de 1ª respuesta Tipo 1).<br>Índice PRL, EBITDA y Facturación Servicenter son de introducción manual (pendiente de definir cómo se cargan) — no se automatizan desde Zendesk.<br>Calidad de tickets ya tiene un primer resultado real (Julio 2026), auditado en el artefacto "calidad-tickets-mp" y volcado aquí a mano tras la validación de Fernando; se actualizará cada mes con la siguiente ronda.<br>El % de consecución se calcula como Resultado ÷ Target, salvo en los indicadores donde "menos es mejor" (tiempo de respuesta, accidentalidad PRL — marcados con ↓ mejor), donde se invierte a Target ÷ Resultado para que mejorar el indicador dé más % de consecución, no menos.',
+    periodNote: 'Estos períodos aplican solo a SLA y tiempo de respuesta. Los objetivos son siempre semestrales (1 ene-30 jun / 1 jul-31 dic): ninguno de estos parciales muestra nunca datos de antes del inicio del semestre en curso. En concreto, "Acumulado año" NO es el año natural completo — es el acumulado exacto desde el 1 de julio de 2026 (inicio de este semestre), igual que el indicador de Puntos, que siempre usa este mismo acumulado sea cual sea la pestaña seleccionada arriba. Si en algún momento el backend no responde con ese dato exacto, este panel marca "no disponible" en vez de mostrar un número de fuera del semestre o solo parcial.',
+    footer: 'Fuente en vivo: API Zendesk/n8n en Railway (puntos, SLA Tipo 1/2, tiempo de 1ª respuesta Tipo 1).<br>Índice PRL, EBITDA y Facturación Servicenter se introducen en la pestaña "🏢 Datos de empresa" — no se automatizan desde Zendesk.<br>Calidad de tickets ya tiene un primer resultado real (Julio 2026), auditado en el artefacto "calidad-tickets-mp" y volcado aquí a mano tras la validación de Fernando; se actualizará cada mes con la siguiente ronda.<br>El % de consecución se calcula como Resultado ÷ Target, salvo en los indicadores donde "menos es mejor" (tiempo de respuesta, accidentalidad PRL — marcados con ↓ mejor), donde se invierte a Target ÷ Resultado para que mejorar el indicador dé más % de consecución, no menos.',
     status: {
       initializing: "Iniciando…",
       connecting: "Conectando con el servidor…",
@@ -253,6 +308,16 @@ const I18N = {
     resumenFooter: 'Haz clic en un técnico para ver el detalle por indicador. El "% conseguido" del resumen solo tiene en cuenta los indicadores que ya tienen un Resultado (los manuales sin introducir — calidad de tickets, EBITDA, facturación, PRL — no restan, simplemente no cuentan todavía). El ⚠ indica que el técnico no llega al 10% de su objetivo semestral de puntos, por lo que sus demás objetivos individuales puntúan 0.',
     chartLabel: "% conseguido",
     chartLoadError: "No se pudo cargar la librería de gráficos (Chart.js) — revisa la conexión a internet. La tabla de abajo sigue disponible.",
+    avgRowLabel: "Media Equipo",
+    avgRowCaption: (pct) => `La fila en rojo "Media Equipo" (${pct}%) es la media del equipo, calculada solo entre los técnicos con al menos un indicador con Resultado.`,
+    empresaNavBtn: "🏢 Datos de empresa",
+    empresaTitle: "🏢 Datos de empresa",
+    empresaIntro: 'Estos 3 indicadores son comunes para todo el equipo y hoy no tienen fuente de datos en vivo. Introduce aquí el mes cerrado y el acumulado desde el 1 de julio de 2026 — el acumulado es el que alimenta el % de consecución de cada técnico.',
+    empresaEditBtn: "✎ Introducir dato", empresaSaveBtn: "Guardar", empresaCancelBtn: "Cancelar",
+    empresaThIndicador: "Indicador", empresaThMes: "Mes cerrado", empresaThValorMes: "Valor del mes", empresaThAcum: "Acum. desde 1 jul",
+    empresaMesPlaceholder: "p.ej. Julio 2026",
+    empresaNotConnectedNote: "Estos datos se cargan automáticamente cada mes desde la automatización de n8n (correo → formulario → guardado). Si editáis un valor a mano aquí, el cambio es solo local a esta sesión del navegador y se pierde al recargar la página.",
+    empresaSavedNote: (time) => `Guardado · ${time}`,
     badgePending: "pendiente Zendesk", badgePendingBare: "pendiente", badgeLive: "en vivo", badgePendingAlta: "⏳ pendiente alta", pillSinDatos: "sin datos",
     indicConDato: (con, total) => `(${con}/${total} indic. con dato)`,
     gateWarnTitle: "No llega al 20% del objetivo de puntos: el resto de objetivos individuales puntúan 0",
@@ -276,8 +341,8 @@ const I18N = {
     refreshBtn: "↻ Refresh",
     loading: "Loading…",
     tabs: { last_week: "Last week", current_month: "Current month", last_month: "Last closed month", year: "Year to date" },
-    periodNote: 'These periods only apply to SLA and response time (they\'re for reference; "Year to date" includes data from before July 1, 2026, useful to see the trend but not part of the semester\'s objective calculation). The Points indicator does NOT use this tab: it\'s always calculated cumulatively from July 1, 2026 (the start of this objectives semester), whatever period is selected above — from the semester\'s 3rd month onward (September on) this panel can\'t accumulate it precisely without the backend\'s range endpoint, and marks it as "not available" instead of showing a partial or incorrect number.',
-    footer: 'Live source: Zendesk/n8n API on Railway (points, Type 1/2 SLA, Type 1 first-response time).<br>PRL index, EBITDA and Servicenter Revenue are entered manually (still pending how they\'ll be loaded) — they aren\'t automated from Zendesk.<br>Ticket quality already has a first real result (July 2026), audited in the "calidad-tickets-mp" artifact and entered here by hand after Fernando\'s validation; it will be updated each month with the next round.<br>The % attainment is calculated as Result ÷ Target, except for indicators where "less is better" (response time, PRL accident rate — marked with ↓ better), where it\'s inverted to Target ÷ Result so that improving the indicator gives more % attainment, not less.',
+    periodNote: 'These periods only apply to SLA and response time. Objectives are always semester-based (Jan 1-Jun 30 / Jul 1-Dec 31): none of these partials ever show data from before the current semester started. Specifically, "Year to date" is NOT the full calendar year — it\'s the exact cumulative total since July 1, 2026 (this semester\'s start), same as the Points indicator, which always uses this same cumulative total regardless of the tab selected above. If the backend doesn\'t respond with that exact figure at some point, this panel shows "not available" instead of a number from outside the semester or a partial one.',
+    footer: 'Live source: Zendesk/n8n API on Railway (points, Type 1/2 SLA, Type 1 first-response time).<br>PRL index, EBITDA and Servicenter Revenue are entered in the "🏢 Company data" tab — they aren\'t automated from Zendesk.<br>Ticket quality already has a first real result (July 2026), audited in the "calidad-tickets-mp" artifact and entered here by hand after Fernando\'s validation; it will be updated each month with the next round.<br>The % attainment is calculated as Result ÷ Target, except for indicators where "less is better" (response time, PRL accident rate — marked with ↓ better), where it\'s inverted to Target ÷ Result so that improving the indicator gives more % attainment, not less.',
     status: {
       initializing: "Starting…",
       connecting: "Connecting to the server…",
@@ -292,6 +357,16 @@ const I18N = {
     resumenFooter: 'Click a technician to see the detail per indicator. The summary\'s "% achieved" only takes into account indicators that already have a Result (manual ones not yet entered — ticket quality, EBITDA, revenue, PRL — don\'t count against the score, they simply don\'t count yet). The ⚠ indicates the technician hasn\'t reached 10% of their semester points objective, so their other individual objectives score 0.',
     chartLabel: "% achieved",
     chartLoadError: "Could not load the charting library (Chart.js) — check your internet connection. The table below is still available.",
+    avgRowLabel: "Team Average",
+    avgRowCaption: (pct) => `The red row "Team Average" (${pct}%) is the team average, calculated only among technicians with at least one indicator with a Result.`,
+    empresaNavBtn: "🏢 Company data",
+    empresaTitle: "🏢 Company data",
+    empresaIntro: 'These 3 indicators are shared across the whole team and currently have no live data source. Enter the closed month and the cumulative total since July 1, 2026 here — the cumulative figure is what feeds each technician\'s % attainment.',
+    empresaEditBtn: "✎ Enter data", empresaSaveBtn: "Save", empresaCancelBtn: "Cancel",
+    empresaThIndicador: "Indicator", empresaThMes: "Closed month", empresaThValorMes: "Month value", empresaThAcum: "Cumulative since Jul 1",
+    empresaMesPlaceholder: "e.g. July 2026",
+    empresaNotConnectedNote: "This data loads automatically each month from the n8n automation (email → form → save). If you edit a value here by hand, the change is local to this browser session only and is lost on reload.",
+    empresaSavedNote: (time) => `Saved · ${time}`,
     badgePending: "pending Zendesk", badgePendingBare: "pending", badgeLive: "live", badgePendingAlta: "⏳ pending onboarding", pillSinDatos: "no data",
     indicConDato: (con, total) => `(${con}/${total} indicators with data)`,
     gateWarnTitle: "Doesn't reach 20% of the points objective: the rest of the individual objectives score 0",
@@ -326,6 +401,7 @@ function applyStaticI18N(){
   document.getElementById('i18n-title').textContent = s.title;
   document.getElementById('i18n-subtitle').textContent = s.subtitle;
   document.getElementById('i18n-refresh-btn').textContent = s.refreshBtn;
+  document.getElementById('i18n-empresa-btn').textContent = s.empresaNavBtn;
   const loadingEl = document.getElementById('i18n-loading');
   if (loadingEl) loadingEl.textContent = s.loading; // el div "app" se reemplaza por completo en el primer render()
   document.getElementById('i18n-period-note').innerHTML = s.periodNote;
@@ -433,9 +509,38 @@ async function cargarDatos(force) {
   }
 }
 
+// Los objetivos son siempre semestrales (1 ene-30 jun / 1 jul-31 dic). Fernando (8 sep 2026): los
+// parciales (semana pasada, mes actual, último mes cerrado, acumulado año) SIEMPRE deben ceñirse a
+// esos límites, nunca mostrar datos de antes del inicio del semestre en curso.
+//
+// Para "year" esto significa que ya no es el año natural completo (que el backend sí calcula desde
+// el 1 de enero): se sustituye por el mismo endpoint exacto de rango que ya se usaba para Puntos
+// (rangeData, pedido siempre desde SEMESTRE_INICIO — ver cargarDatos), así "Acumulado año" pasa a
+// significar en realidad "acumulado desde el inicio de este semestre", igual que Puntos.
+//
+// Para last_week/current_month/last_month, el backend no expone las fechas exactas de esos buckets,
+// así que se recalculan aquí con la misma lógica de calendario que se asume usa el backend, solo para
+// detectar el caso límite (primeros días de julio o enero) en que "el mes pasado" o "la semana pasada"
+// caerían todavía en el semestre anterior — en ese caso se trata como sin dato, en vez de mostrar
+// números que no pertenecen al semestre en curso.
+function periodoDentroDeSemestre(period) {
+  const now = new Date();
+  let inicio;
+  if (period === 'last_week') { inicio = new Date(now); inicio.setDate(inicio.getDate() - 6); }
+  else if (period === 'current_month') { inicio = new Date(now.getFullYear(), now.getMonth(), 1); }
+  else if (period === 'last_month') { inicio = new Date(now.getFullYear(), now.getMonth() - 1, 1); }
+  else return true;
+  return inicio >= SEMESTRE_INICIO;
+}
+
 function getAgentStats(nombreExcel) {
   const zName = ZENDESK_MAP[nombreExcel];
   if (!zName) return { status: 'pending' }; // pendiente de alta en Zendesk
+  if (currentPeriod === 'year') {
+    if (!rangeData || !rangeData.byAgent || !rangeData.byAgent[zName]) return { status: 'no-data' };
+    return { status: 'live', m: rangeData.byAgent[zName] };
+  }
+  if (!periodoDentroDeSemestre(currentPeriod)) return { status: 'no-data' };
   const periodData = statsData && statsData[currentPeriod];
   if (!periodData || !periodData.byAgent || !periodData.byAgent[zName]) return { status: 'no-data' };
   return { status: 'live', m: periodData.byAgent[zName] };
@@ -503,13 +608,23 @@ function evaluarTecnico(nombreExcel) {
       resultado = LIVE_FIELD_MAP[ind.id](agentInfo.m);
       manual = false;
     } else if ((ind.id === 'global_scoring_st_slas_pr_1_pr_2_2026_50') || (ind.id === 'de_clientes_tipo_1_y_tipo_2_mantenido_de' && ind.area === 'empresa')) {
-      // Global scoring de empresa: se deriva del SLA agregado de todo el equipo (bloque "general" del período)
-      const g = statsData && statsData[currentPeriod] && statsData[currentPeriod].general;
+      // Global scoring de empresa: se deriva del SLA agregado de todo el equipo (bloque "general" del
+      // período). Igual que en getAgentStats(), "year" usa el rango exacto desde el inicio del
+      // semestre en vez del año natural, y last_week/current_month/last_month se descartan si caen
+      // fuera del semestre en curso (ver periodoDentroDeSemestre).
+      const g = currentPeriod === 'year'
+        ? (rangeData && rangeData.general)
+        : (periodoDentroDeSemestre(currentPeriod) ? (statsData && statsData[currentPeriod] && statsData[currentPeriod].general) : null);
       if (g && g.sla1 != null && g.sla2 != null) { resultado = Math.round((g.sla1 + g.sla2) / 2); manual = false; }
     } else if (ind.id === 'calidad_de_los_tickets_cerrados' && CALIDAD_TICKETS_RESULTADOS.valores[nombreExcel] != null) {
       // Viene de la auditoría mensual del artefacto "calidad-tickets-mp" (rúbrica sobre tickets reales
       // + revisión de Fernando) — se etiqueta como "en vivo" (Fernando, 10 ago 2026), no como "manual".
       resultado = CALIDAD_TICKETS_RESULTADOS.valores[nombreExcel];
+      manual = false;
+    } else if (EMPRESA_DATOS[ind.id] && EMPRESA_DATOS[ind.id].acumuladoSemestre != null) {
+      // Introducido a mano en la pestaña "🏢 Datos de empresa" (o, en el futuro, vía la automatización
+      // n8n) — se etiqueta como "en vivo" en cuanto tiene dato, igual que Calidad de tickets.
+      resultado = EMPRESA_DATOS[ind.id].acumuladoSemestre;
       manual = false;
     }
     const calc = calcIndicador(ind, resultado);
@@ -565,6 +680,7 @@ function renderResumen() {
     <div class="card">
       <h2>${s.summaryCardTitle}</h2>
       <div class="chart-card"><canvas id="chartRanking"></canvas></div>
+      <p class="info-note" id="avgRowCaption" style="margin-top:8px"></p>
     </div>
     <div class="card">
       <h2>${s.rankingCardTitle(periodLabel(currentPeriod))}</h2>
@@ -583,11 +699,28 @@ function renderResumen() {
   }
   if (chartRanking) chartRanking.destroy();
   const live = evals.filter(e => !e.pending);
+
+  // Media del equipo: se muestra como una fila más en el gráfico (misma forma que la de cualquier
+  // técnico, en rojo), en vez de una línea vertical — a petición explícita de Fernando (11 ago 2026).
+  // Se calcula solo entre los técnicos con Resultado en al menos un indicador (totalPct !== null).
+  const conDatoParaMedia = live.filter(e => e.totalPct !== null);
+  const avgPct = conDatoParaMedia.length
+    ? Math.round((conDatoParaMedia.reduce((sum, e) => sum + e.totalPct, 0) / conDatoParaMedia.length) * 100)
+    : null;
+  const avgCaptionEl = document.getElementById('avgRowCaption');
+  if (avgCaptionEl) avgCaptionEl.textContent = avgPct === null ? '' : s.avgRowCaption(avgPct);
+
+  const chartRows = live.map(e => ({ label: e.nombreExcel, value: e.totalPct === null ? 0 : Math.round(e.totalPct * 100), isAvg: false }));
+  if (avgPct !== null) {
+    chartRows.push({ label: s.avgRowLabel, value: avgPct, isAvg: true });
+    chartRows.sort((a, b) => b.value - a.value);
+  }
+
   chartRanking = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: live.map(e => e.nombreExcel),
-      datasets: [{ label: s.chartLabel, data: live.map(e => e.totalPct === null ? 0 : Math.round(e.totalPct * 100)), backgroundColor: '#2a78d6', borderRadius: 4 }]
+      labels: chartRows.map(r => r.label),
+      datasets: [{ label: s.chartLabel, data: chartRows.map(r => r.value), backgroundColor: chartRows.map(r => r.isAvg ? '#c0392b' : '#2a78d6'), borderRadius: 4 }]
     },
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
@@ -695,8 +828,71 @@ function renderFicha(nombreExcel) {
 
 function volverResumen() { currentView = { type: 'resumen' }; render(); }
 
+function verEmpresa() { empresaEditMode = false; currentView = { type: 'empresa' }; render(); cargarEmpresaDatos(); }
+function toggleEmpresaEdit(on) { empresaEditMode = on; render(); }
+
+function guardarEmpresaDatos() {
+  EMPRESA_INDICADORES.forEach(({ id }) => {
+    const mesLabelEl = document.getElementById(`empresa_mesLabel_${id}`);
+    const mesCerradoEl = document.getElementById(`empresa_mesCerrado_${id}`);
+    const acumEl = document.getElementById(`empresa_acum_${id}`);
+    const mesLabel = mesLabelEl && mesLabelEl.value.trim() ? mesLabelEl.value.trim() : null;
+    const mesCerrado = mesCerradoEl && mesCerradoEl.value !== '' ? parseFloat(mesCerradoEl.value) : null;
+    const acumuladoSemestre = acumEl && acumEl.value !== '' ? parseFloat(acumEl.value) : null;
+    EMPRESA_DATOS[id] = {
+      mesLabel,
+      mesYYYYMM: null, // edición manual: no es un mes YYYY-MM de la API, se muestra tal cual se escribió
+      mesCerrado: (mesCerrado !== null && !isNaN(mesCerrado)) ? mesCerrado : null,
+      acumuladoSemestre: (acumuladoSemestre !== null && !isNaN(acumuladoSemestre)) ? acumuladoSemestre : null,
+    };
+  });
+  // Nota: esto es una edición manual local (solo esta sesión) que sobrescribe temporalmente lo
+  // cargado de la API — al recargar la página, cargarEmpresaDatos() vuelve a traer el dato real.
+  // No se escribe en /api/company-data desde aquí: esa escritura requiere la clave secreta
+  // (x-api-key) que solo conoce el flujo de n8n, nunca debe exponerse en este HTML público.
+  empresaLastSaved = new Date().toLocaleTimeString('es-ES');
+  empresaEditMode = false;
+  render();
+}
+
+function renderEmpresa() {
+  const s = I18N[LANG];
+  const rows = EMPRESA_INDICADORES.map(({ id, label }) => {
+    const d = EMPRESA_DATOS[id];
+    if (empresaEditMode) {
+      return `<tr>
+        <td>${trLabel(label)}</td>
+        <td><input type="text" id="empresa_mesLabel_${id}" value="${d.mesLabel ? d.mesLabel.replace(/"/g, '&quot;') : ''}" placeholder="${s.empresaMesPlaceholder}" style="width:120px"></td>
+        <td class="right"><input type="number" step="any" id="empresa_mesCerrado_${id}" value="${d.mesCerrado ?? ''}" style="width:90px;text-align:right"></td>
+        <td class="right"><input type="number" step="any" id="empresa_acum_${id}" value="${d.acumuladoSemestre ?? ''}" style="width:90px;text-align:right"></td>
+      </tr>`;
+    }
+    const mesMostrado = formatMesYYYYMM(d.mesYYYYMM) || d.mesLabel || '—';
+    return `<tr><td>${trLabel(label)}</td><td>${mesMostrado}</td><td class="right">${fmtNum(d.mesCerrado)}</td><td class="right">${fmtNum(d.acumuladoSemestre)}</td></tr>`;
+  }).join('');
+  document.getElementById('app').innerHTML = `
+    <button class="back-btn" onclick="volverResumen()">${s.backBtn}</button>
+    <div class="card">
+      <h2>${s.empresaTitle}</h2>
+      <p class="info-note">${s.empresaIntro}</p>
+      <table>
+        <thead><tr><th>${s.empresaThIndicador}</th><th>${s.empresaThMes}</th><th class="right">${s.empresaThValorMes}</th><th class="right">${s.empresaThAcum}</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:12px">
+        ${empresaEditMode
+          ? `<button onclick="guardarEmpresaDatos()">${s.empresaSaveBtn}</button> <button onclick="toggleEmpresaEdit(false)">${s.empresaCancelBtn}</button>`
+          : `<button onclick="toggleEmpresaEdit(true)">${s.empresaEditBtn}</button>`}
+        ${(!empresaEditMode && empresaLastSaved) ? `<span style="margin-left:10px;font-size:12px;color:var(--good)">${s.empresaSavedNote(empresaLastSaved)}</span>` : ''}
+      </div>
+      <p class="info-note" style="margin-top:14px">${s.empresaNotConnectedNote}</p>
+    </div>
+  `;
+}
+
 function render() {
   if (currentView.type === 'ficha') renderFicha(currentView.nombreExcel);
+  else if (currentView.type === 'empresa') renderEmpresa();
   else renderResumen();
 }
 
@@ -711,6 +907,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 applyStaticI18N();
 cargarDatos(false);
+cargarEmpresaDatos();
 </script>
 </body>
 </html>
