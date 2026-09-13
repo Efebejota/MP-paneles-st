@@ -333,6 +333,7 @@ const I18N = {
     gatedBadge: "anulado (regla 10%)", gatedTitle: "No se alcanza el 10% del objetivo semestral de puntos: este indicador puntúa 0",
     noDisponible: "no disponible ⚠", noDisponibleTitle: "A partir del 3er mes del semestre hace falta el endpoint /api/stats/range en el backend de Railway para acumular con precisión desde el 1 de julio — de momento no se muestra un número para no dar un dato incorrecto",
     acumExacto: "acum. desde 1 jul ✓ exacto", acumAprox: "acum. desde 1 jul (aprox.)",
+    prorateadoNote: (target, meses) => `objetivo ajustado a ${meses} ${meses === 1 ? 'mes cerrado' : 'meses cerrados'}: ${target}`,
     manualBadge: "manual",
   },
   en: {
@@ -382,6 +383,7 @@ const I18N = {
     gatedBadge: "voided (10% rule)", gatedTitle: "The 10% semester points objective isn't reached: this indicator scores 0",
     noDisponible: "not available ⚠", noDisponibleTitle: "From the semester's 3rd month onward, the /api/stats/range endpoint is needed on the Railway backend to accumulate precisely from July 1 — for now no number is shown to avoid giving an incorrect figure",
     acumExacto: "cumulative since Jul 1 ✓ exact", acumAprox: "cumulative since Jul 1 (approx.)",
+    prorateadoNote: (target, meses) => `target adjusted to ${meses} ${meses === 1 ? 'closed month' : 'closed months'}: ${target}`,
     manualBadge: "manual",
   },
 };
@@ -555,12 +557,28 @@ const INVERSE_IDS = new Set([
   'tratamiento_y_servicio_clientes_tipo_3',
 ]);
 
+// Indicadores de empresa cuyo Resultado es un importe ACUMULADO mes a mes (EBITDA, Facturación
+// Servicenter) — a diferencia del Índice de frecuencia PRL, que es una tasa y no un acumulado
+// (por eso está en INVERSE_IDS con la fórmula normal, sin prorratear). Antes de que termine el
+// semestre, el acumulado no se puede comparar contra el target de los 6 meses completos: hay que
+// prorratear el target a los meses YA CERRADOS. Fernando, 13 sep 2026: ejemplo EBITDA target
+// 2.782 / 6 meses = 463,67€/mes; con julio y agosto cerrados (2 meses), la referencia debe ser
+// 463,67 × 2 = 927, no 2.782 — si no, el % de consecución sale artificialmente bajo hasta diciembre
+// aunque el ritmo real sea correcto.
+const PRORRATEO_MENSUAL_IDS = new Set([
+  'ebitda_sim_2026_k',
+  'facturacion_servicenter_2026_m',
+]);
+
 // I = Resultado/Target (o Target/Resultado si "menos es mejor") ; contribución = I * peso * (0.2 área | 0.8 individual)
-function calcIndicador(ind, resultado) {
+// targetOverride: target ya prorrateado a usar en vez de ind.target (ver PRORRATEO_MENSUAL_IDS) —
+// no cambia lo que se muestra en la columna "Target" (que sigue siendo el objetivo semestral completo).
+function calcIndicador(ind, resultado, targetOverride) {
   if (resultado === null || resultado === undefined) return { resultado: null, pctCons: null, contrib: null };
+  const target = targetOverride != null ? targetOverride : ind.target;
   const inverse = INVERSE_IDS.has(ind.id);
   if (inverse && !(resultado > 0)) return { resultado, pctCons: null, contrib: null };
-  let pctCons = inverse ? (ind.target / resultado) : (resultado / ind.target);
+  let pctCons = inverse ? (target / resultado) : (resultado / target);
   if (ind.id === 'calidad_de_los_tickets_cerrados') {
     // Fernando (10 ago 2026): la consecución de "Calidad de los tickets cerrados" solo se mueve
     // entre 80% y 120%. Por debajo del 80% del target cuenta como 0%; por encima del 120% se limita
@@ -627,11 +645,14 @@ function evaluarTecnico(nombreExcel) {
       resultado = EMPRESA_DATOS[ind.id].acumuladoSemestre;
       manual = false;
     }
-    const calc = calcIndicador(ind, resultado);
+    const esProrateado = PRORRATEO_MENSUAL_IDS.has(ind.id);
+    const mesesCerrados = mesesCompletosCerrados();
+    const targetProrateado = esProrateado ? (ind.target / 6) * mesesCerrados : null;
+    const calc = calcIndicador(ind, resultado, targetProrateado);
     const aplicaGate = ind.area === 'individual'; // la regla del 10% solo afecta a los objetivos individuales 2º+
     const gated = aplicaGate && !puntosGateOk && resultado !== null;
     const finalCalc = gated ? { resultado, pctCons: 0, contrib: 0 } : calc;
-    return { ...ind, ...finalCalc, manual, pending, esPuntos: false, gated };
+    return { ...ind, ...finalCalc, manual, pending, esPuntos: false, gated, esProrateado, targetProrateado, mesesCerrados };
   });
 
   // Resumen: solo cuentan los indicadores con un valor real de Resultado (regla explícita de Fernando).
@@ -761,6 +782,11 @@ function filaIndicador(f, opts) {
     } else {
       resultadoCell = `${fmtNum(f.resultado)}<div style="font-size:9.5px;color:var(--text-muted);white-space:normal">${s.acumAprox}</div>`;
     }
+  } else if (f.esProrateado && f.resultado !== null && f.targetProrateado != null) {
+    // EBITDA / Facturación Servicenter: el % Consec. ya compara contra el target prorrateado a los
+    // meses cerrados (ver PRORRATEO_MENSUAL_IDS) — esta nota aclara contra qué cifra se ha comparado,
+    // ya que la columna "Target" sigue mostrando el objetivo semestral completo.
+    resultadoCell = `${fmtNum(f.resultado)}<div style="font-size:9.5px;color:var(--text-muted);white-space:normal">${s.prorateadoNote(fmtNum(f.targetProrateado), f.mesesCerrados)}</div>`;
   }
   let ritmoCell = '';
   if (opts.showRitmo) {
