@@ -124,6 +124,7 @@ footer.note { font-size:11px; color:var(--text-muted); margin-top:6px; line-heig
   <span class="status-dot" id="dotStatus"></span>
   <span id="txtStatus">Iniciando…</span>
   <button onclick="cargarDatos(true)" id="i18n-refresh-btn">↻ Refrescar</button>
+  <button onclick="verEmpresa()" id="i18n-empresa-btn" style="margin-left:auto"></button>
 </div>
 
 <div class="tabs" id="periodTabs">
@@ -177,6 +178,16 @@ const ZENDESK_MAP = {
 const LIVE_FIELD_MAP = {
   'de_clientes_tipo_1_y_tipo_2_mantenido_de': m => (m && m.sla1 != null && m.sla2 != null) ? Math.round((m.sla1 + m.sla2) / 2) : null,
   'tiempo_medio_de_respuesta_a_clientes_tip': m => m ? m.avgFR1 : null,
+  // Amine, 15 sep 2026: "Tiempo medio respuestas clientes tipo 1 y tipo 2" no puede ser manual — ya
+  // tenemos el dato en el dashboard de Zendesk (zendesk-tecnicos-production), que sí trae tipo1cnt/
+  // tipo2cnt y avgFR1/avgFR2 por técnico. La media debe ser PROPORCIONAL al nº de tickets de cada
+  // tipo (solo coincide con la media aritmética simple cuando hay 50%/50% de tipo 1 y tipo 2).
+  'tiempo_medio_respuestas_clientes_tipo_1_': m => {
+    if (!m) return null;
+    const n1 = m.tipo1cnt || 0, n2 = m.tipo2cnt || 0;
+    if (n1 + n2 <= 0 || m.avgFR1 == null || m.avgFR2 == null) return null;
+    return (m.avgFR1 * n1 + m.avgFR2 * n2) / (n1 + n2);
+  },
 };
 
 // "Calidad de los tickets cerrados" — resultado (%, 0-100) introducido tras la auditoría mensual de
@@ -186,32 +197,76 @@ const LIVE_FIELD_MAP = {
 // misma errata que ya traía el Excel de objetivos).
 const CALIDAD_TICKETS_RESULTADOS = {
   mes: 'Julio 2026',
-  // 15 sep 2026: re-muestreo a n=12 tickets/técnico (antes n=4, 43 tickets en total; ahora 125 tickets).
-  // Estos valores son el resultado de la evaluación inicial por IA, PENDIENTE del ejercicio de
-  // autocorrección de Fernando con cada técnico (ver bitácora, apartado "Decisión de Fernando y nuevo
-  // ejercicio antes de agosto") — se recalcularán tras esas reuniones.
   valores: {
-    'Alexis': 104,
-    'Amine': 88,
-    'Carlos': 76,
-    'Chrisptopher': 74,
-    'Eduardo': 99,
-    'Javier': 68,
-    'Mar': 89,
-    'Michael': 73,
-    'Nicklas': 51,
-    'Pedro': 78,
-    'Raidel': 73,
-    // Ruud: esta vez SÍ incluido (79) con sus 9 tickets de julio, a diferencia de la ronda anterior en la
-    // que se excluyó por completo. El ticket #20090 (anomalía: el trabajo visible es de Pedro Calvo, no
-    // de Ruud) sigue dentro del cálculo con nota de advertencia — Fernando decidirá si se excluye tras
-    // hablarlo con Ruud, igual que con el #20105 de Alexis.
-    'Ruud': 79,
+    'Alexis': 69,
+    'Amine': 54,
+    'Carlos': 60,
+    'Chrisptopher': 35,
+    'Eduardo': 78,
+    'Javier': 66,
+    'Mar': 80,
+    'Michael': 64,
+    'Nicklas': 35,
+    'Pedro': 80,
+    'Raidel': 47,
+    // Ruud: sin resultado este mes — su único ticket válido de julio lo gestionó realmente Pedro
+    // Calvo, no Ruud (ver bitácora); Fernando decidió no evaluarlo con ese ticket.
     // Antonio Gómez, Nikolaos, Andreas: sin tickets con puntos>1 en julio (0 tickets válidos), sin resultado.
-    // Nikolaos tuvo 1 ticket muestreado en la ronda anterior, insuficiente para puntuar; en el re-muestreo
-    // de julio con n=12 tampoco aparece con volumen suficiente.
   },
 };
+
+// Los 3 indicadores de empresa que hoy no tienen fuente de datos en vivo (a diferencia de SLA,
+// tiempo de respuesta o Puntos, que vienen de Zendesk). Se introducen a mano desde la pestaña
+// "🏢 Datos de empresa" (ver verEmpresa()/renderEmpresa()/guardarEmpresaDatos()). De momento se
+// guardan solo en esta sesión del navegador — está en marcha, en paralelo, la automatización n8n
+// que los alimentará vía backend (/api/company-data).
+const EMPRESA_INDICADORES = [
+  { id: 'indice_de_frecuencia_accidentes_prl', label: 'Índice de frecuencia (accidentes- PRL)' },
+  { id: 'ebitda_sim_2026_k', label: 'EBITDA SIM 2026 (K€)' },
+  { id: 'facturacion_servicenter_2026_m', label: 'Facturación Servicenter 2026 (m€)' },
+];
+let EMPRESA_DATOS = {
+  indice_de_frecuencia_accidentes_prl: { mesLabel: null, mesYYYYMM: null, mesCerrado: null, acumuladoSemestre: null },
+  ebitda_sim_2026_k: { mesLabel: null, mesYYYYMM: null, mesCerrado: null, acumuladoSemestre: null },
+  facturacion_servicenter_2026_m: { mesLabel: null, mesYYYYMM: null, mesCerrado: null, acumuladoSemestre: null },
+};
+
+// Carga automática desde la automatización n8n (Automatizaciones_n8n/Objetivos_Empresa_Automatizacion):
+// cada respuesta de formulario queda guardada en GET /api/company-data, servido por el mismo backend
+// que sirve este HTML (mismo origen, por eso la ruta es relativa). Si la API no responde (redeploy en
+// marcha, o un indicador que todavía no tiene ningún dato), el panel sigue funcionando con lo que ya
+// hubiera en EMPRESA_DATOS (edición manual de esta sesión, o "—").
+const MESES_ES_L = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const MESES_EN_L = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+function formatMesYYYYMM(yyyymm) {
+  if (!yyyymm || !/^\d{4}-\d{2}$/.test(yyyymm)) return null;
+  const [y, m] = yyyymm.split('-').map(Number);
+  const nombres = LANG === 'en' ? MESES_EN_L : MESES_ES_L;
+  return `${nombres[m - 1]} ${y}`;
+}
+async function cargarEmpresaDatos() {
+  try {
+    const res = await fetch('/api/company-data', { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    EMPRESA_INDICADORES.forEach(({ id }) => {
+      const ind = data[id];
+      if (!ind || !ind.ultimoMes || !ind.historico || !ind.historico[ind.ultimoMes]) return;
+      const dato = ind.historico[ind.ultimoMes];
+      EMPRESA_DATOS[id] = {
+        mesLabel: (EMPRESA_DATOS[id] && EMPRESA_DATOS[id].mesLabel) || null,
+        mesYYYYMM: ind.ultimoMes,
+        mesCerrado: dato.valorMes,
+        acumuladoSemestre: dato.acumulado,
+      };
+    });
+    render();
+  } catch (e) {
+    // Sin conexión con la API de datos de empresa: se deja lo que ya hubiera.
+  }
+}
+let empresaEditMode = false;
+let empresaLastSaved = null;
 
 // ============================================================
 // i18n — selector de idioma ES/EN (a petición de Fernando, 11 ago 2026, misma idea que en el
@@ -233,6 +288,7 @@ const INDICATOR_LABEL_EN = {
   "Tiempo medio respuestas clientes tipo 1 y tipo 2": "Average response time to Type 1 and Type 2 customers",
   "Objetivo Guía de Problemas": "Problem Guide objective",
   "Tratamiento y servicio clientes Tipo 3": "Type 3 customer handling and service",
+  "EBITDA SIM 2026 (K€)": "EBITDA SIM 2026 (K€)",
 };
 function trLabel(labelEs){
   if(LANG==='en' && INDICATOR_LABEL_EN[labelEs]) return INDICATOR_LABEL_EN[labelEs];
@@ -246,8 +302,8 @@ const I18N = {
     refreshBtn: "↻ Refrescar",
     loading: "Cargando…",
     tabs: { last_week: "Semana pasada", current_month: "Mes actual", last_month: "Último mes cerrado", year: "Acumulado año" },
-    periodNote: 'Estos períodos aplican solo a SLA y tiempo de respuesta (son de referencia; "Acumulado año" incluye datos de antes del 1 de julio de 2026, útil para ver la tendencia pero no forma parte del cálculo de objetivos del semestre). El indicador de Puntos NO usa esta pestaña: siempre se calcula acumulado desde el 1 de julio de 2026 (inicio de este semestre de objetivos), sea cual sea el período seleccionado arriba — a partir del 3er mes del semestre (septiembre en adelante) este panel no puede acumularlo con exactitud sin el endpoint de rango del backend y lo marca como "no disponible" en vez de mostrar un número parcial o incorrecto.',
-    footer: 'Fuente en vivo: API Zendesk/n8n en Railway (puntos, SLA Tipo 1/2, tiempo de 1ª respuesta Tipo 1).<br>Índice PRL, EBITDA y Facturación Servicenter son de introducción manual (pendiente de definir cómo se cargan) — no se automatizan desde Zendesk.<br>Calidad de tickets ya tiene un primer resultado real (Julio 2026), auditado en el artefacto "calidad-tickets-mp" y volcado aquí a mano tras la validación de Fernando; se actualizará cada mes con la siguiente ronda.<br>El % de consecución se calcula como Resultado ÷ Target, salvo en los indicadores donde "menos es mejor" (tiempo de respuesta, accidentalidad PRL — marcados con ↓ mejor), donde se invierte a Target ÷ Resultado para que mejorar el indicador dé más % de consecución, no menos.',
+    periodNote: 'Estos períodos aplican solo a SLA y tiempo de respuesta. Los objetivos son siempre semestrales (1 ene-30 jun / 1 jul-31 dic): ninguno de estos parciales muestra nunca datos de antes del inicio del semestre en curso. En concreto, "Acumulado año" NO es el año natural completo — es el acumulado exacto desde el 1 de julio de 2026 (inicio de este semestre), igual que el indicador de Puntos, que siempre usa este mismo acumulado sea cual sea la pestaña seleccionada arriba. Si en algún momento el backend no responde con ese dato exacto, este panel marca "no disponible" en vez de mostrar un número de fuera del semestre o solo parcial.',
+    footer: 'Fuente en vivo: API Zendesk/n8n en Railway (puntos, SLA Tipo 1/2, tiempo de 1ª respuesta Tipo 1).<br>Índice PRL, EBITDA y Facturación Servicenter se introducen en la pestaña "🏢 Datos de empresa" — no se automatizan desde Zendesk.<br>Calidad de tickets ya tiene un primer resultado real (Julio 2026), auditado en el artefacto "calidad-tickets-mp" y volcado aquí a mano tras la validación de Fernando; se actualizará cada mes con la siguiente ronda.<br>El % de consecución se calcula por tramos sobre Min/Target/Máx (por debajo del Min = 0%, en el Min = 80%, en el Target = 100%, en el Máx o por encima = 120%, interpolando entre medias), salvo en los indicadores donde "menos es mejor" (tiempo de respuesta, accidentalidad PRL — marcados con ↓ mejor), donde la escala se invierte (Máx = 80%, Min = 120%).',
     status: {
       initializing: "Iniciando…",
       connecting: "Conectando con el servidor…",
@@ -262,6 +318,18 @@ const I18N = {
     resumenFooter: 'Haz clic en un técnico para ver el detalle por indicador. El "% conseguido" del resumen solo tiene en cuenta los indicadores que ya tienen un Resultado (los manuales sin introducir — calidad de tickets, EBITDA, facturación, PRL — no restan, simplemente no cuentan todavía). El ⚠ indica que el técnico no llega al 10% de su objetivo semestral de puntos, por lo que sus demás objetivos individuales puntúan 0.',
     chartLabel: "% conseguido",
     chartLoadError: "No se pudo cargar la librería de gráficos (Chart.js) — revisa la conexión a internet. La tabla de abajo sigue disponible.",
+    avgRowLabel: "Media Equipo",
+    avgRowCaption: (pct) => `La fila en rojo "Media Equipo" (${pct}%) es la media del equipo, calculada solo entre los técnicos con al menos un indicador con Resultado.`,
+    avgObjetivoRowLabel: "Media Equipo Objetivo",
+    avgObjetivoRowCaption: (pct) => `La fila en verde "Media Equipo Objetivo" (${pct}%) es la media calculada solo entre Mar, Pedro, Amine, Javier, Raidel, Michael, Carlos y Eduardo (los técnicos con objetivos completos definidos), sin los de alta parcial/pendiente.`,
+    empresaNavBtn: "🏢 Datos de empresa",
+    empresaTitle: "🏢 Datos de empresa",
+    empresaIntro: 'Estos 3 indicadores son comunes para todo el equipo y hoy no tienen fuente de datos en vivo. Introduce aquí el mes cerrado y el acumulado desde el 1 de julio de 2026 — el acumulado es el que alimenta el % de consecución de cada técnico.',
+    empresaEditBtn: "✎ Introducir dato", empresaSaveBtn: "Guardar", empresaCancelBtn: "Cancelar",
+    empresaThIndicador: "Indicador", empresaThMes: "Mes cerrado", empresaThValorMes: "Valor del mes", empresaThAcum: "Acum. desde 1 jul",
+    empresaMesPlaceholder: "p.ej. Julio 2026",
+    empresaNotConnectedNote: "Estos datos se cargan automáticamente cada mes desde la automatización de n8n (correo → formulario → guardado). También puedes editarlos a mano aquí: al guardar se envían al mismo servidor y quedan igual de permanentes (hace falta la clave de acceso — pregunta a Fernando si no la tienes).",
+    empresaSavedNote: (time) => `Guardado · ${time}`,
     badgePending: "pendiente Zendesk", badgePendingBare: "pendiente", badgeLive: "en vivo", badgePendingAlta: "⏳ pendiente alta", pillSinDatos: "sin datos",
     indicConDato: (con, total) => `(${con}/${total} indic. con dato)`,
     gateWarnTitle: "No llega al 20% del objetivo de puntos: el resto de objetivos individuales puntúan 0",
@@ -272,12 +340,17 @@ const I18N = {
     areaSection: "Objetivos de Área — 20% del total (igual para todo el equipo)",
     individualSection: "Objetivos Individuales — 80% del total",
     thIndicador: "Indicador", thPeso: "Peso", thMin: "Min", thTarget: "Target", thMax: "Máx", thResultado: "Resultado", thPctConsec: "% Consec.", thRitmo: "% si ritmo actual (solo Puntos)",
-    fichaFooter: '"% Consec." = Resultado ÷ Target (Target ÷ Resultado en las marcadas "↓mejor"). La contribución al total pondera cada fila por su peso y por el 20%/80% del bloque al que pertenece.<br>"% si ritmo actual" (solo Puntos): si mantuviera el promedio mensual acumulado hasta ahora durante los 6 meses del semestre, ¿qué % del target lograría? Es informativo, no entra en el total.<br>Regla del 10%: si el acumulado de puntos no llega al 10% del target semestral, los demás objetivos individuales de este técnico puntúan 0 en este período (se marcan como "anulado (regla 10%)").',
+    fichaFooter: '"% Consec." se calcula por tramos sobre Min/Target/Máx: por debajo del Min es 0%, en el Min es 80%, en el Target es 100%, en el Máx (o por encima) es 120% (tope), e interpola en los tramos intermedios (Min-Target y Target-Máx). En las marcadas "↓mejor" es al revés (Máx=80%, Min=120%). La contribución al total pondera cada fila por su peso y por el 20%/80% del bloque al que pertenece.<br>"% si ritmo actual" (solo Puntos): si mantuviera el promedio mensual acumulado hasta ahora durante los 6 meses del semestre, ¿qué % del target lograría (Resultado ÷ Target, sin tramos)? Es informativo, no entra en el total.<br>Regla del 10%: si el acumulado de puntos no llega al 10% del target semestral, los demás objetivos individuales de este técnico puntúan 0 en este período (se marcan como "anulado (regla 10%)").',
     inverseTooltip: "Menos es mejor: se invierte a Target ÷ Resultado", inverseTag: "↓mejor",
     gatedBadge: "anulado (regla 10%)", gatedTitle: "No se alcanza el 10% del objetivo semestral de puntos: este indicador puntúa 0",
     noDisponible: "no disponible ⚠", noDisponibleTitle: "A partir del 3er mes del semestre hace falta el endpoint /api/stats/range en el backend de Railway para acumular con precisión desde el 1 de julio — de momento no se muestra un número para no dar un dato incorrecto",
     acumExacto: "acum. desde 1 jul ✓ exacto", acumAprox: "acum. desde 1 jul (aprox.)",
+    prorateadoNote: (target, meses) => `objetivo ajustado a ${meses} ${meses === 1 ? 'mes cerrado' : 'meses cerrados'}: ${target}`,
     manualBadge: "manual",
+    manualTecEditTitle: "Introducir dato a mano", manualTecNotConnectedNote: "Este dato se guarda en el servidor y persiste al recargar la página. Para guardarlo hace falta la clave de acceso (pregunta a Fernando si no la tienes).",
+    manualWriteApiKeyPrompt: "Clave de acceso para guardar datos (pídesela a Fernando):",
+    manualWriteSaveError: "No se pudo guardar el dato: revisa la clave de acceso o la conexión, e inténtalo de nuevo.",
+    empresaMesRequiredNote: "Para guardar un indicador hace falta indicar su mes cerrado (selector de mes) — si lo dejas vacío, ese indicador no se actualiza.",
   },
   en: {
     title: "🎯 ST Objectives 2026 — H2",
@@ -285,8 +358,8 @@ const I18N = {
     refreshBtn: "↻ Refresh",
     loading: "Loading…",
     tabs: { last_week: "Last week", current_month: "Current month", last_month: "Last closed month", year: "Year to date" },
-    periodNote: 'These periods only apply to SLA and response time (they\'re for reference; "Year to date" includes data from before July 1, 2026, useful to see the trend but not part of the semester\'s objective calculation). The Points indicator does NOT use this tab: it\'s always calculated cumulatively from July 1, 2026 (the start of this objectives semester), whatever period is selected above — from the semester\'s 3rd month onward (September on) this panel can\'t accumulate it precisely without the backend\'s range endpoint, and marks it as "not available" instead of showing a partial or incorrect number.',
-    footer: 'Live source: Zendesk/n8n API on Railway (points, Type 1/2 SLA, Type 1 first-response time).<br>PRL index, EBITDA and Servicenter Revenue are entered manually (still pending how they\'ll be loaded) — they aren\'t automated from Zendesk.<br>Ticket quality already has a first real result (July 2026), audited in the "calidad-tickets-mp" artifact and entered here by hand after Fernando\'s validation; it will be updated each month with the next round.<br>The % attainment is calculated as Result ÷ Target, except for indicators where "less is better" (response time, PRL accident rate — marked with ↓ better), where it\'s inverted to Target ÷ Result so that improving the indicator gives more % attainment, not less.',
+    periodNote: 'These periods only apply to SLA and response time. Objectives are always semester-based (Jan 1-Jun 30 / Jul 1-Dec 31): none of these partials ever show data from before the current semester started. Specifically, "Year to date" is NOT the full calendar year — it\'s the exact cumulative total since July 1, 2026 (this semester\'s start), same as the Points indicator, which always uses this same cumulative total regardless of the tab selected above. If the backend doesn\'t respond with that exact figure at some point, this panel shows "not available" instead of a number from outside the semester or a partial one.',
+    footer: 'Live source: Zendesk/n8n API on Railway (points, Type 1/2 SLA, Type 1 first-response time).<br>PRL index, EBITDA and Servicenter Revenue are entered in the "🏢 Company data" tab — they aren\'t automated from Zendesk.<br>Ticket quality already has a first real result (July 2026), audited in the "calidad-tickets-mp" artifact and entered here by hand after Fernando\'s validation; it will be updated each month with the next round.<br>The % attainment is calculated in bands over Min/Target/Max (below Min = 0%, at Min = 80%, at Target = 100%, at Max or above = 120%, interpolating in between), except for indicators where "less is better" (response time, PRL accident rate — marked with ↓ better), where the scale is reversed (Max = 80%, Min = 120%).',
     status: {
       initializing: "Starting…",
       connecting: "Connecting to the server…",
@@ -301,6 +374,18 @@ const I18N = {
     resumenFooter: 'Click a technician to see the detail per indicator. The summary\'s "% achieved" only takes into account indicators that already have a Result (manual ones not yet entered — ticket quality, EBITDA, revenue, PRL — don\'t count against the score, they simply don\'t count yet). The ⚠ indicates the technician hasn\'t reached 10% of their semester points objective, so their other individual objectives score 0.',
     chartLabel: "% achieved",
     chartLoadError: "Could not load the charting library (Chart.js) — check your internet connection. The table below is still available.",
+    avgRowLabel: "Team Average",
+    avgRowCaption: (pct) => `The red row "Team Average" (${pct}%) is the team average, calculated only among technicians with at least one indicator with a Result.`,
+    avgObjetivoRowLabel: "Core Team Average",
+    avgObjetivoRowCaption: (pct) => `The green row "Core Team Average" (${pct}%) is the average calculated only among Mar, Pedro, Amine, Javier, Raidel, Michael, Carlos and Eduardo (the technicians with fully defined objectives), excluding those with partial/pending onboarding.`,
+    empresaNavBtn: "🏢 Company data",
+    empresaTitle: "🏢 Company data",
+    empresaIntro: 'These 3 indicators are shared across the whole team and currently have no live data source. Enter the closed month and the cumulative total since July 1, 2026 here — the cumulative figure is what feeds each technician\'s % attainment.',
+    empresaEditBtn: "✎ Enter data", empresaSaveBtn: "Save", empresaCancelBtn: "Cancel",
+    empresaThIndicador: "Indicator", empresaThMes: "Closed month", empresaThValorMes: "Month value", empresaThAcum: "Cumulative since Jul 1",
+    empresaMesPlaceholder: "e.g. July 2026",
+    empresaNotConnectedNote: "This data loads automatically each month from the n8n automation (email → form → save). You can also edit it here by hand: saving sends it to the same server and it's just as permanent (you'll need the access key — ask Fernando if you don't have it).",
+    empresaSavedNote: (time) => `Saved · ${time}`,
     badgePending: "pending Zendesk", badgePendingBare: "pending", badgeLive: "live", badgePendingAlta: "⏳ pending onboarding", pillSinDatos: "no data",
     indicConDato: (con, total) => `(${con}/${total} indicators with data)`,
     gateWarnTitle: "Doesn't reach 20% of the points objective: the rest of the individual objectives score 0",
@@ -311,12 +396,17 @@ const I18N = {
     areaSection: "Area Objectives — 20% of total (same for the whole team)",
     individualSection: "Individual Objectives — 80% of total",
     thIndicador: "Indicator", thPeso: "Weight", thMin: "Min", thTarget: "Target", thMax: "Max", thResultado: "Result", thPctConsec: "% Attainment", thRitmo: "% at current pace (Points only)",
-    fichaFooter: '"% Attainment" = Result ÷ Target (Target ÷ Result on the ones marked "↓better"). The contribution to the total weights each row by its weight and by the 20%/80% of the block it belongs to.<br>"% at current pace" (Points only): if the accumulated monthly average so far were kept up for the semester\'s 6 months, what % of the target would be reached? It\'s informative, it doesn\'t count toward the total.<br>10% rule: if the accumulated points don\'t reach 10% of the semester target, this technician\'s other individual objectives score 0 in this period (marked as "voided (10% rule)").',
+    fichaFooter: '"% Attainment" is calculated in bands over Min/Target/Max: below Min is 0%, at Min is 80%, at Target is 100%, at Max (or above) is 120% (capped), interpolating in between (Min-Target and Target-Max). On the ones marked "↓better" it\'s reversed (Max=80%, Min=120%). The contribution to the total weights each row by its weight and by the 20%/80% of the block it belongs to.<br>"% at current pace" (Points only): if the accumulated monthly average so far were kept up for the semester\'s 6 months, what % of the target would be reached (Result ÷ Target, no bands)? It\'s informative, it doesn\'t count toward the total.<br>10% rule: if the accumulated points don\'t reach 10% of the semester target, this technician\'s other individual objectives score 0 in this period (marked as "voided (10% rule)").',
     inverseTooltip: "Less is better: inverted to Target ÷ Result", inverseTag: "↓better",
     gatedBadge: "voided (10% rule)", gatedTitle: "The 10% semester points objective isn't reached: this indicator scores 0",
     noDisponible: "not available ⚠", noDisponibleTitle: "From the semester's 3rd month onward, the /api/stats/range endpoint is needed on the Railway backend to accumulate precisely from July 1 — for now no number is shown to avoid giving an incorrect figure",
     acumExacto: "cumulative since Jul 1 ✓ exact", acumAprox: "cumulative since Jul 1 (approx.)",
+    prorateadoNote: (target, meses) => `target adjusted to ${meses} ${meses === 1 ? 'closed month' : 'closed months'}: ${target}`,
     manualBadge: "manual",
+    manualTecEditTitle: "Enter value manually", manualTecNotConnectedNote: "This value is saved to the server and persists on reload. Saving it requires an access key (ask Fernando if you don't have it).",
+    manualWriteApiKeyPrompt: "Access key to save data (ask Fernando for it):",
+    manualWriteSaveError: "Couldn't save the value: check the access key or your connection, and try again.",
+    empresaMesRequiredNote: "To save an indicator you need to set its closed month (month picker) — if you leave it empty, that indicator won't be updated.",
   },
 };
 
@@ -335,6 +425,7 @@ function applyStaticI18N(){
   document.getElementById('i18n-title').textContent = s.title;
   document.getElementById('i18n-subtitle').textContent = s.subtitle;
   document.getElementById('i18n-refresh-btn').textContent = s.refreshBtn;
+  document.getElementById('i18n-empresa-btn').textContent = s.empresaNavBtn;
   const loadingEl = document.getElementById('i18n-loading');
   if (loadingEl) loadingEl.textContent = s.loading; // el div "app" se reemplaza por completo en el primer render()
   document.getElementById('i18n-period-note').innerHTML = s.periodNote;
@@ -415,6 +506,39 @@ let rangeData = null; // resultado de /api/stats/range (null si el backend aún 
 let currentView = { type: 'resumen' };
 let chartRanking = null;
 
+// Segunda media, solo entre los técnicos con objetivos completos definidos (a diferencia de "Media
+// Equipo", que promedia TODOS los que tengan algún Resultado, incluidos los de alta parcial/pendiente
+// como Antonio Gómez, Ruud, Andreas, Nikolaos, Nicklas, Alexis o Chirstopher). Fernando, 15 sep 2026:
+// fila nueva "Media Equipo Objetivo" en verde, con estos 8 técnicos.
+const TECNICOS_OBJETIVO_COMPLETO = new Set([
+  'Mar', 'Pedro', 'Amine', 'Javier', 'Raidel', 'Michael', 'Carlos', 'Eduardo',
+]);
+
+// Pinta el % al final de cada barra del gráfico de RESUMEN, siempre visible (sin depender del hover
+// del tooltip) — a petición de Fernando, 15 sep 2026. Plugin propio en vez de una librería aparte
+// (chartjs-plugin-datalabels) para no añadir una dependencia más solo para esto.
+const BAR_VALUE_LABELS_PLUGIN = {
+  id: 'barValueLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    chart.data.datasets.forEach((dataset, dsIndex) => {
+      const meta = chart.getDatasetMeta(dsIndex);
+      if (!meta || meta.hidden) return;
+      meta.data.forEach((bar, i) => {
+        const value = dataset.data[i];
+        if (value === null || value === undefined) return;
+        ctx.save();
+        ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = '#1c2128';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${value}%`, bar.x + 6, bar.y);
+        ctx.restore();
+      });
+    });
+  },
+};
+
 async function cargarDatos(force) {
   setStatus('loading', 'connecting');
   try {
@@ -442,9 +566,38 @@ async function cargarDatos(force) {
   }
 }
 
+// Los objetivos son siempre semestrales (1 ene-30 jun / 1 jul-31 dic). Fernando (8 sep 2026): los
+// parciales (semana pasada, mes actual, último mes cerrado, acumulado año) SIEMPRE deben ceñirse a
+// esos límites, nunca mostrar datos de antes del inicio del semestre en curso.
+//
+// Para "year" esto significa que ya no es el año natural completo (que el backend sí calcula desde
+// el 1 de enero): se sustituye por el mismo endpoint exacto de rango que ya se usaba para Puntos
+// (rangeData, pedido siempre desde SEMESTRE_INICIO — ver cargarDatos), así "Acumulado año" pasa a
+// significar en realidad "acumulado desde el inicio de este semestre", igual que Puntos.
+//
+// Para last_week/current_month/last_month, el backend no expone las fechas exactas de esos buckets,
+// así que se recalculan aquí con la misma lógica de calendario que se asume usa el backend, solo para
+// detectar el caso límite (primeros días de julio o enero) en que "el mes pasado" o "la semana pasada"
+// caerían todavía en el semestre anterior — en ese caso se trata como sin dato, en vez de mostrar
+// números que no pertenecen al semestre en curso.
+function periodoDentroDeSemestre(period) {
+  const now = new Date();
+  let inicio;
+  if (period === 'last_week') { inicio = new Date(now); inicio.setDate(inicio.getDate() - 6); }
+  else if (period === 'current_month') { inicio = new Date(now.getFullYear(), now.getMonth(), 1); }
+  else if (period === 'last_month') { inicio = new Date(now.getFullYear(), now.getMonth() - 1, 1); }
+  else return true;
+  return inicio >= SEMESTRE_INICIO;
+}
+
 function getAgentStats(nombreExcel) {
   const zName = ZENDESK_MAP[nombreExcel];
   if (!zName) return { status: 'pending' }; // pendiente de alta en Zendesk
+  if (currentPeriod === 'year') {
+    if (!rangeData || !rangeData.byAgent || !rangeData.byAgent[zName]) return { status: 'no-data' };
+    return { status: 'live', m: rangeData.byAgent[zName] };
+  }
+  if (!periodoDentroDeSemestre(currentPeriod)) return { status: 'no-data' };
   const periodData = statsData && statsData[currentPeriod];
   if (!periodData || !periodData.byAgent || !periodData.byAgent[zName]) return { status: 'no-data' };
   return { status: 'live', m: periodData.byAgent[zName] };
@@ -459,18 +612,94 @@ const INVERSE_IDS = new Set([
   'tratamiento_y_servicio_clientes_tipo_3',
 ]);
 
-// I = Resultado/Target (o Target/Resultado si "menos es mejor") ; contribución = I * peso * (0.2 área | 0.8 individual)
-function calcIndicador(ind, resultado) {
+// Indicadores de empresa cuyo Resultado es un importe ACUMULADO mes a mes (EBITDA, Facturación
+// Servicenter) — a diferencia del Índice de frecuencia PRL, que es una tasa y no un acumulado
+// (por eso está en INVERSE_IDS con la fórmula normal, sin prorratear). Antes de que termine el
+// semestre, el acumulado no se puede comparar contra el target de los 6 meses completos: hay que
+// prorratear el target a los meses YA CERRADOS. Fernando, 13 sep 2026: ejemplo EBITDA target
+// 2.782 / 6 meses = 463,67€/mes; con julio y agosto cerrados (2 meses), la referencia debe ser
+// 463,67 × 2 = 927, no 2.782 — si no, el % de consecución sale artificialmente bajo hasta diciembre
+// aunque el ritmo real sea correcto.
+const PRORRATEO_MENSUAL_IDS = new Set([
+  'ebitda_sim_2026_k',
+  'facturacion_servicenter_2026_m',
+]);
+
+// Indicadores INDIVIDUALES (a diferencia de los de empresa, que son comunes a todo el equipo y se
+// editan desde la pestaña "🏢 Datos de empresa") sin fuente en vivo, editables a mano directamente
+// desde la ficha del técnico afectado. Fernando, 15 sep 2026: Mar necesita meter a mano "Tratamiento
+// y servicio clientes Tipo 3" — el mismo mecanismo sirve para cualquier otro indicador individual
+// manual que se añada más adelante (basta con añadir su id aquí).
+const MANUAL_TECNICO_EDITABLE_IDS = new Set([
+  'tratamiento_y_servicio_clientes_tipo_3',
+]);
+// { [nombreExcel]: { [indId]: valor } } — igual que EMPRESA_DATOS, pero por técnico. Se guarda en el
+// backend (Fernando, 15 sep 2026: "hazlo persistente ahora") vía GET/POST /api/individual-data, con el
+// mismo patrón que /api/company-data (lectura pública, escritura protegida con x-api-key).
+let MANUAL_TECNICO_DATOS = {};
+let editandoManualTecnico = null; // { nombreExcel, indId } mientras se edita una fila desde la ficha
+// Clave de acceso compartida para CUALQUIER guardado manual desde el navegador (datos individuales de
+// técnico Y "🏢 Datos de empresa", ver guardarManualTecnico() y guardarEmpresaDatos") — es la misma
+// x-api-key/API_KEY que ya usaba n8n, así que sirve para ambas rutas. No se embebe en el HTML (el repo
+// es público): se pide una vez por sesión de navegador con window.prompt() la primera vez que alguien
+// guarda un dato, y se reutiliza mientras la página siga abierta. Si el servidor la rechaza (401) se
+// descarta para que se vuelva a pedir en el siguiente intento.
+let manualWriteApiKey = null;
+
+// Carga automática de los datos manuales por técnico ya guardados en el backend (mismo origen que
+// /api/company-data). Si la API no responde, el panel sigue funcionando con lo que ya hubiera en
+// MANUAL_TECNICO_DATOS (p.ej. una edición de esta misma sesión).
+async function cargarIndividualDatos() {
+  try {
+    const res = await fetch('/api/individual-data', { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    Object.keys(data).forEach(nombreExcel => {
+      MANUAL_TECNICO_DATOS[nombreExcel] = MANUAL_TECNICO_DATOS[nombreExcel] || {};
+      Object.keys(data[nombreExcel]).forEach(indId => {
+        const dato = data[nombreExcel][indId];
+        if (dato && dato.valor !== null && dato.valor !== undefined) {
+          MANUAL_TECNICO_DATOS[nombreExcel][indId] = dato.valor;
+        }
+      });
+    });
+    render();
+  } catch (e) {
+    // Sin conexión con la API de datos individuales: se deja lo que ya hubiera.
+  }
+}
+
+// % de consecución — escala por tramos sobre Min/Target/Máx (Fernando, 15 sep 2026, aplica a TODOS
+// los objetivos, de área y personales):
+//   resultado < min           → 0%
+//   resultado = min           → 80%
+//   min < resultado < target  → interpola 80%→100%
+//   resultado = target        → 100%
+//   target < resultado < max  → interpola 100%→120%
+//   resultado >= max          → 120% (tope)
+// Cuando "menos es mejor" (INVERSE_IDS) es exactamente al revés: max hace de "mínimo" (80%) y min
+// hace de "máximo" (120%), porque un resultado más bajo es mejor.
+// overrides {target,min,max}: valores ya prorrateados a usar en vez de los de ind (ver
+// PRORRATEO_MENSUAL_IDS) — no cambia lo que se muestra en las columnas Min/Target/Máx, que siguen
+// mostrando el objetivo semestral completo.
+function calcIndicador(ind, resultado, overrides) {
   if (resultado === null || resultado === undefined) return { resultado: null, pctCons: null, contrib: null };
+  overrides = overrides || {};
+  const target = overrides.target != null ? overrides.target : ind.target;
+  const min = overrides.min != null ? overrides.min : ind.min;
+  const max = overrides.max != null ? overrides.max : ind.max;
   const inverse = INVERSE_IDS.has(ind.id);
-  if (inverse && !(resultado > 0)) return { resultado, pctCons: null, contrib: null };
-  let pctCons = inverse ? (ind.target / resultado) : (resultado / ind.target);
-  if (ind.id === 'calidad_de_los_tickets_cerrados') {
-    // Fernando (10 ago 2026): la consecución de "Calidad de los tickets cerrados" solo se mueve
-    // entre 80% y 120%. Por debajo del 80% del target cuenta como 0%; por encima del 120% se limita
-    // a 120% (no da más contribución aunque el resultado bruto sea más alto).
-    if (pctCons < 0.8) pctCons = 0;
-    else if (pctCons > 1.2) pctCons = 1.2;
+  let pctCons;
+  if (!inverse) {
+    if (resultado < min) pctCons = 0;
+    else if (resultado <= target) pctCons = (target === min) ? 1.0 : 0.8 + (resultado - min) / (target - min) * 0.2;
+    else if (resultado < max) pctCons = (max === target) ? 1.2 : 1.0 + (resultado - target) / (max - target) * 0.2;
+    else pctCons = 1.2;
+  } else {
+    if (resultado > max) pctCons = 0;
+    else if (resultado >= target) pctCons = (max === target) ? 1.0 : 1.0 - (resultado - target) / (max - target) * 0.2;
+    else if (resultado > min) pctCons = (target === min) ? 1.2 : 1.0 + (target - resultado) / (target - min) * 0.2;
+    else pctCons = 1.2;
   }
   const scope = ind.area === 'empresa' ? 0.2 : 0.8;
   const contrib = pctCons * ind.peso * scope;
@@ -496,13 +725,19 @@ function evaluarTecnico(nombreExcel) {
       const resultado = puntosAcum.valor;
       let pctCons = null, pctRitmo = null, contrib = null;
       if (resultado !== null) {
-        pctCons = resultado / ind.target;
+        // % Consec. de Puntos usa la misma escala por tramos Min/Target/Máx que el resto de
+        // objetivos (Fernando, 15 sep 2026: "esto aplica para todos los objetivos, de área y
+        // personales") — ver calcIndicador.
+        const calcPuntos = calcIndicador(ind, resultado);
+        pctCons = calcPuntos.pctCons;
+        contrib = calcPuntos.contrib;
         // Ritmo: se divide por los meses YA CERRADOS (no por los "transcurridos" incluyendo el
         // mes en curso), porque el acumulado ya recoge también lo hecho en el mes en curso —
         // dividir por un mes de más infla el denominador y hunde la proyección artificialmente.
+        // Esta proyección es solo informativa (no entra en el total) y mantiene su propia escala
+        // simple resultado÷target, no la de tramos 80-120%.
         const proyeccion = (resultado / mesesCompletosCerrados()) * 6;
         pctRitmo = proyeccion / ind.target;
-        contrib = pctCons * ind.peso * 0.8;
         puntosGateOk = resultado >= ind.target * UMBRAL_PUNTOS_MINIMO;
       }
       return { ...ind, resultado, pctCons, pctRitmo, contrib, manual: false, pending, esPuntos: true, gated: false, acum: puntosAcum };
@@ -512,20 +747,42 @@ function evaluarTecnico(nombreExcel) {
       resultado = LIVE_FIELD_MAP[ind.id](agentInfo.m);
       manual = false;
     } else if ((ind.id === 'global_scoring_st_slas_pr_1_pr_2_2026_50') || (ind.id === 'de_clientes_tipo_1_y_tipo_2_mantenido_de' && ind.area === 'empresa')) {
-      // Global scoring de empresa: se deriva del SLA agregado de todo el equipo (bloque "general" del período)
-      const g = statsData && statsData[currentPeriod] && statsData[currentPeriod].general;
+      // Global scoring de empresa: se deriva del SLA agregado de todo el equipo (bloque "general" del
+      // período). Igual que en getAgentStats(), "year" usa el rango exacto desde el inicio del
+      // semestre en vez del año natural, y last_week/current_month/last_month se descartan si caen
+      // fuera del semestre en curso (ver periodoDentroDeSemestre).
+      const g = currentPeriod === 'year'
+        ? (rangeData && rangeData.general)
+        : (periodoDentroDeSemestre(currentPeriod) ? (statsData && statsData[currentPeriod] && statsData[currentPeriod].general) : null);
       if (g && g.sla1 != null && g.sla2 != null) { resultado = Math.round((g.sla1 + g.sla2) / 2); manual = false; }
     } else if (ind.id === 'calidad_de_los_tickets_cerrados' && CALIDAD_TICKETS_RESULTADOS.valores[nombreExcel] != null) {
       // Viene de la auditoría mensual del artefacto "calidad-tickets-mp" (rúbrica sobre tickets reales
       // + revisión de Fernando) — se etiqueta como "en vivo" (Fernando, 10 ago 2026), no como "manual".
       resultado = CALIDAD_TICKETS_RESULTADOS.valores[nombreExcel];
       manual = false;
+    } else if (EMPRESA_DATOS[ind.id] && EMPRESA_DATOS[ind.id].acumuladoSemestre != null) {
+      // Introducido a mano en la pestaña "🏢 Datos de empresa" (o, en el futuro, vía la automatización
+      // n8n) — se etiqueta como "en vivo" en cuanto tiene dato, igual que Calidad de tickets.
+      resultado = EMPRESA_DATOS[ind.id].acumuladoSemestre;
+      manual = false;
+    } else if (MANUAL_TECNICO_EDITABLE_IDS.has(ind.id) && MANUAL_TECNICO_DATOS[nombreExcel] && MANUAL_TECNICO_DATOS[nombreExcel][ind.id] != null) {
+      // Indicador individual sin fuente en vivo, introducido a mano desde la ficha del técnico (ver
+      // MANUAL_TECNICO_EDITABLE_IDS) — mismo criterio que Datos de empresa: en vivo en cuanto hay dato.
+      resultado = MANUAL_TECNICO_DATOS[nombreExcel][ind.id];
+      manual = false;
     }
-    const calc = calcIndicador(ind, resultado);
+    const esProrateado = PRORRATEO_MENSUAL_IDS.has(ind.id);
+    const mesesCerrados = mesesCompletosCerrados();
+    // Al prorratear el target a los meses cerrados, min y máx se prorratean igual — si no, la escala
+    // 80%-100%-120% dejaría de tener sentido a mitad de semestre (ver calcIndicador).
+    const targetProrateado = esProrateado ? (ind.target / 6) * mesesCerrados : null;
+    const minProrateado = esProrateado ? (ind.min / 6) * mesesCerrados : null;
+    const maxProrateado = esProrateado ? (ind.max / 6) * mesesCerrados : null;
+    const calc = calcIndicador(ind, resultado, esProrateado ? { target: targetProrateado, min: minProrateado, max: maxProrateado } : null);
     const aplicaGate = ind.area === 'individual'; // la regla del 10% solo afecta a los objetivos individuales 2º+
     const gated = aplicaGate && !puntosGateOk && resultado !== null;
     const finalCalc = gated ? { resultado, pctCons: 0, contrib: 0 } : calc;
-    return { ...ind, ...finalCalc, manual, pending, esPuntos: false, gated };
+    return { ...ind, ...finalCalc, manual, pending, esPuntos: false, gated, esProrateado, targetProrateado, mesesCerrados };
   });
 
   // Resumen: solo cuentan los indicadores con un valor real de Resultado (regla explícita de Fernando).
@@ -574,6 +831,8 @@ function renderResumen() {
     <div class="card">
       <h2>${s.summaryCardTitle}</h2>
       <div class="chart-card"><canvas id="chartRanking"></canvas></div>
+      <p class="info-note" id="avgRowCaption" style="margin-top:8px"></p>
+      <p class="info-note" id="avgObjetivoRowCaption" style="margin-top:8px"></p>
     </div>
     <div class="card">
       <h2>${s.rankingCardTitle(periodLabel(currentPeriod))}</h2>
@@ -592,17 +851,52 @@ function renderResumen() {
   }
   if (chartRanking) chartRanking.destroy();
   const live = evals.filter(e => !e.pending);
+
+  // Media del equipo: se muestra como una fila más en el gráfico (misma forma que la de cualquier
+  // técnico, en rojo), en vez de una línea vertical — a petición explícita de Fernando (11 ago 2026).
+  // Se calcula solo entre los técnicos con Resultado en al menos un indicador (totalPct !== null).
+  const conDatoParaMedia = live.filter(e => e.totalPct !== null);
+  const avgPct = conDatoParaMedia.length
+    ? Math.round((conDatoParaMedia.reduce((sum, e) => sum + e.totalPct, 0) / conDatoParaMedia.length) * 100)
+    : null;
+  const avgCaptionEl = document.getElementById('avgRowCaption');
+  if (avgCaptionEl) avgCaptionEl.textContent = avgPct === null ? '' : s.avgRowCaption(avgPct);
+
+  // "Media Equipo Objetivo": misma idea, pero solo entre los 8 técnicos con objetivos completos
+  // (Fernando, 15 sep 2026) — se pinta en verde y se coloca entre las demás barras según su valor.
+  const conDatoParaMediaObjetivo = conDatoParaMedia.filter(e => TECNICOS_OBJETIVO_COMPLETO.has(e.nombreExcel));
+  const avgObjetivoPct = conDatoParaMediaObjetivo.length
+    ? Math.round((conDatoParaMediaObjetivo.reduce((sum, e) => sum + e.totalPct, 0) / conDatoParaMediaObjetivo.length) * 100)
+    : null;
+  const avgObjetivoCaptionEl = document.getElementById('avgObjetivoRowCaption');
+  if (avgObjetivoCaptionEl) avgObjetivoCaptionEl.textContent = avgObjetivoPct === null ? '' : s.avgObjetivoRowCaption(avgObjetivoPct);
+
+  const chartRows = live.map(e => ({ label: e.nombreExcel, value: e.totalPct === null ? 0 : Math.round(e.totalPct * 100), isAvg: false, isAvgObjetivo: false }));
+  if (avgPct !== null) {
+    chartRows.push({ label: s.avgRowLabel, value: avgPct, isAvg: true, isAvgObjetivo: false });
+  }
+  if (avgObjetivoPct !== null) {
+    chartRows.push({ label: s.avgObjetivoRowLabel, value: avgObjetivoPct, isAvg: false, isAvgObjetivo: true });
+  }
+  if (avgPct !== null || avgObjetivoPct !== null) {
+    chartRows.sort((a, b) => b.value - a.value);
+  }
+
   chartRanking = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: live.map(e => e.nombreExcel),
-      datasets: [{ label: s.chartLabel, data: live.map(e => e.totalPct === null ? 0 : Math.round(e.totalPct * 100)), backgroundColor: '#2a78d6', borderRadius: 4 }]
+      labels: chartRows.map(r => r.label),
+      datasets: [{ label: s.chartLabel, data: chartRows.map(r => r.value), backgroundColor: chartRows.map(r => r.isAvgObjetivo ? '#0ca30c' : r.isAvg ? '#c0392b' : '#2a78d6'), borderRadius: 4 }]
     },
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      // Espacio extra a la derecha para que el % pintado al final de cada barra (ver
+      // BAR_VALUE_LABELS_PLUGIN) no se corte, sobre todo en las barras que llegan a valores altos.
+      layout: { padding: { right: 40 } },
       plugins: { legend: { display: false } },
       scales: { x: { ticks: { callback: v => v + '%' } } }
-    }
+    },
+    plugins: [BAR_VALUE_LABELS_PLUGIN],
   });
 }
 
@@ -637,14 +931,39 @@ function filaIndicador(f, opts) {
     } else {
       resultadoCell = `${fmtNum(f.resultado)}<div style="font-size:9.5px;color:var(--text-muted);white-space:normal">${s.acumAprox}</div>`;
     }
+  } else if (f.esProrateado && f.resultado !== null && f.targetProrateado != null) {
+    // EBITDA / Facturación Servicenter: el % Consec. ya compara contra el target prorrateado a los
+    // meses cerrados (ver PRORRATEO_MENSUAL_IDS) — esta nota aclara contra qué cifra se ha comparado,
+    // ya que la columna "Target" sigue mostrando el objetivo semestral completo.
+    resultadoCell = `${fmtNum(f.resultado)}<div style="font-size:9.5px;color:var(--text-muted);white-space:normal">${s.prorateadoNote(fmtNum(f.targetProrateado), f.mesesCerrados)}</div>`;
   }
+
+  // Indicadores individuales sin fuente en vivo, editables a mano desde la propia ficha (ver
+  // MANUAL_TECNICO_EDITABLE_IDS) — mismo patrón que "Datos de empresa" pero por técnico.
+  let manualEditBtn = '';
+  const esEditable = opts.nombreExcel && MANUAL_TECNICO_EDITABLE_IDS.has(f.id);
+  const estaEditando = esEditable && editandoManualTecnico
+    && editandoManualTecnico.nombreExcel === opts.nombreExcel && editandoManualTecnico.indId === f.id;
+  if (esEditable) {
+    const nombreSafe = opts.nombreExcel.replace(/'/g, "\\'");
+    if (estaEditando) {
+      resultadoCell = `<input type="number" step="any" id="manualTecInput" value="${f.resultado ?? ''}" style="width:80px;text-align:right">
+        <div style="margin-top:4px">
+          <button onclick="guardarManualTecnico('${nombreSafe}','${f.id}')" style="font-size:10px;padding:2px 6px">${s.empresaSaveBtn}</button>
+          <button onclick="cancelarEdicionManualTecnico()" style="font-size:10px;padding:2px 6px">${s.empresaCancelBtn}</button>
+        </div>`;
+    } else {
+      manualEditBtn = ` <button onclick="abrirEdicionManualTecnico('${nombreSafe}','${f.id}')" title="${s.manualTecEditTitle}" style="border:none;background:none;cursor:pointer;font-size:12px;color:var(--text-muted);padding:0 2px">✎</button>`;
+    }
+  }
+
   let ritmoCell = '';
   if (opts.showRitmo) {
     const ritmoTxt = (f.pctRitmo === null || f.pctRitmo === undefined) ? '—' : `${Math.round(f.pctRitmo * 100)}%`;
     ritmoCell = `<td class="right">${ritmoTxt}</td>`;
   }
   return `<tr>
-    <td>${trLabel(f.label)}${inverso}${gatedBadge} ${origen}</td>
+    <td>${trLabel(f.label)}${inverso}${gatedBadge} ${origen}${manualEditBtn}</td>
     <td class="right">${(f.peso*100).toFixed(0)}%</td>
     <td class="right">${fmtNum(f.min)}</td>
     <td class="right">${fmtNum(f.target)}</td>
@@ -689,14 +1008,14 @@ function renderFicha(nombreExcel) {
       <div class="section-h">${s.areaSection}</div>
       <table>
         <thead><tr><th>${s.thIndicador}</th><th class="right">${s.thPeso}</th><th class="right">${s.thMin}</th><th class="right">${s.thTarget}</th><th class="right">${s.thMax}</th><th class="right">${s.thResultado}</th><th class="right">${s.thPctConsec}</th></tr></thead>
-        <tbody>${area.map(f => filaIndicador(f)).join('')}</tbody>
+        <tbody>${area.map(f => filaIndicador(f, { nombreExcel })).join('')}</tbody>
       </table>
 
       <div class="section-h">${s.individualSection}</div>
       <table>
         <thead><tr><th>${s.thIndicador}</th><th class="right">${s.thPeso}</th><th class="right">${s.thMin}</th><th class="right">${s.thTarget}</th><th class="right">${s.thMax}</th><th class="right">${s.thResultado}</th><th class="right">${s.thPctConsec}</th><th class="right">${s.thRitmo}</th></tr></thead>
-        <tbody>${individual.map(f => filaIndicador(f, { showRitmo: true })).join('')}</tbody>
-      </table>` : ''}
+        <tbody>${individual.map(f => filaIndicador(f, { showRitmo: true, nombreExcel })).join('')}</tbody>
+      </table>${individual.some(f => MANUAL_TECNICO_EDITABLE_IDS.has(f.id)) ? `<p class="info-note" style="margin-top:10px">${s.manualTecNotConnectedNote}</p>` : ''}` : ''}
       <footer class="note">${s.fichaFooter}</footer>
     </div>
   `;
@@ -704,8 +1023,148 @@ function renderFicha(nombreExcel) {
 
 function volverResumen() { currentView = { type: 'resumen' }; render(); }
 
+function abrirEdicionManualTecnico(nombreExcel, indId) {
+  editandoManualTecnico = { nombreExcel, indId };
+  render();
+}
+function cancelarEdicionManualTecnico() {
+  editandoManualTecnico = null;
+  render();
+}
+async function guardarManualTecnico(nombreExcel, indId) {
+  const s = I18N[LANG];
+  const input = document.getElementById('manualTecInput');
+  const val = input && input.value !== '' ? parseFloat(input.value) : null;
+  const valor = (val !== null && !isNaN(val)) ? val : null;
+
+  if (manualWriteApiKey === null) {
+    manualWriteApiKey = window.prompt(s.manualWriteApiKeyPrompt) || '';
+  }
+
+  try {
+    const res = await fetch('/api/individual-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': manualWriteApiKey },
+      body: JSON.stringify({ nombreExcel, indicador_id: indId, valor }),
+    });
+    if (!res.ok) {
+      manualWriteApiKey = null; // clave incorrecta/vacía: se vuelve a pedir en el próximo intento
+      alert(s.manualWriteSaveError);
+      return;
+    }
+  } catch (e) {
+    alert(s.manualWriteSaveError);
+    return;
+  }
+
+  if (!MANUAL_TECNICO_DATOS[nombreExcel]) MANUAL_TECNICO_DATOS[nombreExcel] = {};
+  MANUAL_TECNICO_DATOS[nombreExcel][indId] = valor;
+  editandoManualTecnico = null;
+  render();
+}
+
+function verEmpresa() { empresaEditMode = false; currentView = { type: 'empresa' }; render(); cargarEmpresaDatos(); }
+function toggleEmpresaEdit(on) { empresaEditMode = on; render(); }
+
+// Fernando, 17 sep 2026: los datos de empresa introducidos a mano desde esta pestaña deben persistir
+// igual que los que trae n8n, no perderse al recargar. Reutiliza el mismo /api/company-data que ya
+// usa n8n (mismo formato: indicador_id + mes YYYY-MM + valorMes + acumulado), protegido con la misma
+// x-api-key que MANUAL_TECNICO_DATOS (ver manualWriteApiKey más arriba). Solo se envían al backend los
+// indicadores a los que se les ha puesto un mes — los que se dejen sin mes no se tocan.
+async function guardarEmpresaDatos() {
+  const s = I18N[LANG];
+  const aGuardar = [];
+  for (const { id } of EMPRESA_INDICADORES) {
+    const mesEl = document.getElementById(`empresa_mes_${id}`);
+    const mesCerradoEl = document.getElementById(`empresa_mesCerrado_${id}`);
+    const acumEl = document.getElementById(`empresa_acum_${id}`);
+    const mes = mesEl && mesEl.value ? mesEl.value : null; // 'YYYY-MM' o null
+    const mesCerrado = mesCerradoEl && mesCerradoEl.value !== '' ? parseFloat(mesCerradoEl.value) : null;
+    const acumuladoSemestre = acumEl && acumEl.value !== '' ? parseFloat(acumEl.value) : null;
+    if (!mes) continue; // sin mes seleccionado: este indicador no se guarda esta vez
+    aGuardar.push({
+      indicador_id: id,
+      mes,
+      valorMes: (mesCerrado !== null && !isNaN(mesCerrado)) ? mesCerrado : null,
+      acumulado: (acumuladoSemestre !== null && !isNaN(acumuladoSemestre)) ? acumuladoSemestre : null,
+    });
+  }
+
+  if (aGuardar.length === 0) {
+    alert(s.empresaMesRequiredNote);
+    return;
+  }
+
+  if (manualWriteApiKey === null) {
+    manualWriteApiKey = window.prompt(s.manualWriteApiKeyPrompt) || '';
+  }
+
+  for (const item of aGuardar) {
+    try {
+      const res = await fetch('/api/company-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': manualWriteApiKey },
+        body: JSON.stringify({ ...item, respondidoPor: 'Fernando (panel, edición manual)' }),
+      });
+      if (!res.ok) {
+        manualWriteApiKey = null; // clave incorrecta/vacía: se vuelve a pedir en el próximo intento
+        alert(s.manualWriteSaveError);
+        return;
+      }
+    } catch (e) {
+      alert(s.manualWriteSaveError);
+      return;
+    }
+  }
+
+  // Todo guardado en el backend: se recarga desde la fuente de verdad en vez de fiarse del estado
+  // local, así el mesYYYYMM/ultimoMes quedan exactamente como los calcula el servidor.
+  empresaLastSaved = new Date().toLocaleTimeString('es-ES');
+  empresaEditMode = false;
+  await cargarEmpresaDatos();
+}
+
+function renderEmpresa() {
+  const s = I18N[LANG];
+  const rows = EMPRESA_INDICADORES.map(({ id, label }) => {
+    const d = EMPRESA_DATOS[id];
+    if (empresaEditMode) {
+      // Selector de mes (type=month, formato YYYY-MM nativo) en vez de texto libre — necesario para
+      // poder guardar el dato en /api/company-data (mismo campo "mes" que usa n8n). Si el indicador
+      // aún no tiene mesYYYYMM (p.ej. viejas ediciones con solo mesLabel), se deja vacío.
+      return `<tr>
+        <td>${trLabel(label)}</td>
+        <td><input type="month" id="empresa_mes_${id}" value="${d.mesYYYYMM || ''}" style="width:130px"></td>
+        <td class="right"><input type="number" step="any" id="empresa_mesCerrado_${id}" value="${d.mesCerrado ?? ''}" style="width:90px;text-align:right"></td>
+        <td class="right"><input type="number" step="any" id="empresa_acum_${id}" value="${d.acumuladoSemestre ?? ''}" style="width:90px;text-align:right"></td>
+      </tr>`;
+    }
+    const mesMostrado = formatMesYYYYMM(d.mesYYYYMM) || d.mesLabel || '—';
+    return `<tr><td>${trLabel(label)}</td><td>${mesMostrado}</td><td class="right">${fmtNum(d.mesCerrado)}</td><td class="right">${fmtNum(d.acumuladoSemestre)}</td></tr>`;
+  }).join('');
+  document.getElementById('app').innerHTML = `
+    <button class="back-btn" onclick="volverResumen()">${s.backBtn}</button>
+    <div class="card">
+      <h2>${s.empresaTitle}</h2>
+      <p class="info-note">${s.empresaIntro}</p>
+      <table>
+        <thead><tr><th>${s.empresaThIndicador}</th><th>${s.empresaThMes}</th><th class="right">${s.empresaThValorMes}</th><th class="right">${s.empresaThAcum}</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:12px">
+        ${empresaEditMode
+          ? `<button onclick="guardarEmpresaDatos()">${s.empresaSaveBtn}</button> <button onclick="toggleEmpresaEdit(false)">${s.empresaCancelBtn}</button>`
+          : `<button onclick="toggleEmpresaEdit(true)">${s.empresaEditBtn}</button>`}
+        ${(!empresaEditMode && empresaLastSaved) ? `<span style="margin-left:10px;font-size:12px;color:var(--good)">${s.empresaSavedNote(empresaLastSaved)}</span>` : ''}
+      </div>
+      <p class="info-note" style="margin-top:14px">${s.empresaNotConnectedNote}</p>
+    </div>
+  `;
+}
+
 function render() {
   if (currentView.type === 'ficha') renderFicha(currentView.nombreExcel);
+  else if (currentView.type === 'empresa') renderEmpresa();
   else renderResumen();
 }
 
@@ -720,6 +1179,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 applyStaticI18N();
 cargarDatos(false);
+cargarEmpresaDatos();
+cargarIndividualDatos();
 </script>
 </body>
 </html>
