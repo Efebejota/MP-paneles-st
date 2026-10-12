@@ -83,7 +83,7 @@
   <div class="head-row">
     <div>
       <h1 id="i18n-title">Calidad de los tickets cerrados</h1>
-      <p class="sub" id="i18n-sub">Objetivo 2026‑S2 · MP Ascensores — auditoría mensual de 4 tickets aleatorios por técnico (puntuación &gt; 1), evaluados contra la rúbrica de calidad. La IA propone el veredicto por cada punto; tú lo revisas, lo corriges y añades notas de formación.</p>
+      <p class="sub" id="i18n-sub">Objetivo 2026‑S2 · MP Ascensores — auditoría mensual de 12 tickets aleatorios por técnico (puntuación &gt; 1), evaluados contra la rúbrica de calidad. La IA propone el veredicto por cada punto; tú lo revisas, lo corriges y añades notas de formación.</p>
     </div>
     <div class="lang-toggle">
       <button id="lang-es-btn" class="lang-btn active" onclick="setLang('es')">ES</button>
@@ -92,7 +92,7 @@
   </div>
 
   <div class="banner" id="i18n-banner">
-    <b>Estado actual:</b> el muestreo mensual es <b>100% automático</b>: un workflow en n8n recorre los 15 técnicos dados de alta el día 1 de cada mes (Zendesk Search API + reglas de <code>canon.js</code> + selección aleatoria de 4 tickets, o todos si hay menos de 4 con puntuación &gt;1), guarda todo y me envía un único email que leo yo solo, sin que tengas que copiar ni pegar nada. Julio 2026 ya tiene muestra real para 12 de los 15 técnicos (los otros 3 no tuvieron tickets con puntos&gt;1 ese mes). Las notas de formación que dejes abajo también se guardan solas al pulsar "Guardar".
+    <b>Estado actual:</b> el muestreo mensual es <b>100% automático</b>: un workflow en n8n recorre los 15 técnicos dados de alta el día 1 de cada mes (Zendesk Search API + reglas de <code>canon.js</code> + selección aleatoria de 12 tickets, o todos si hay menos de 12 con puntuación &gt;1), guarda todo y me envía un único email que leo yo solo, sin que tengas que copiar ni pegar nada. Julio 2026 ya tiene muestra real para 12 de los 15 técnicos (los otros 3 no tuvieron tickets con puntos&gt;1 ese mes). Las notas de formación que dejes abajo también se guardan solas al pulsar "Guardar".
   </div>
 
   <div class="card">
@@ -180,7 +180,7 @@ function ticket19712(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject demasiado genérico frente al contenido real", aiVerdict: "warn", verdict: "warn", note: "El subject es solo 'ecoGO' y no refleja que el motivo real fue un fallo de encoder/inversor con err11/rollback que terminó en sustitución del drive, como se ve en '(11:55:30) Amine Laaguidi (MP): do you have any spare parts in stock? I suspect : encoder/drive'.", formNote: "" },
+        { label: "Subject demasiado genérico frente al contenido real", aiVerdict: "warn", verdict: "bad", note: "El subject es solo 'ecoGO' y no refleja que el motivo real fue un fallo de encoder/inversor con err11/rollback que terminó en sustitución del drive, como se ve en '(11:55:30) Amine Laaguidi (MP): do you have any spare parts in stock? I suspect : encoder/drive'.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." },
         { label: "Continuidad de un ticket anterior no reflejada en campos", aiVerdict: "warn", verdict: "warn", note: "El cliente pide seguir el caso previo '(12:41:51) emil wihlborg: Wanna continue with Ticket 19680', pero se abre como ticket nuevo (19712) sin quedar enlazada esa referencia en los campos administrativos.", formNote: "" }
       ]},
       { nombre: "Presentación tras asignación", items: [
@@ -207,7 +207,7 @@ function ticket18916(){
     puntos: 1.2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject y contenido coherentes", aiVerdict: "good", verdict: "good", note: "El subject 'ecoGO' es coherente con la instalación de un captador absoluto en un controlador ecoGO, y el ticket recoge la continuidad del caso previo mencionada por el cliente: '(10:16:04) Šime: I would like to continue in case 17857'.", formNote: "" }
+        { label: "Subject y contenido coherentes", aiVerdict: "good", verdict: "bad", note: "El subject 'ecoGO' es coherente con la instalación de un captador absoluto en un controlador ecoGO, y el ticket recoge la continuidad del caso previo mencionada por el cliente: '(10:16:04) Šime: I would like to continue in case 17857'.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "No se presenta por nombre", aiVerdict: "warn", verdict: "warn", note: "Primera respuesta pública: '(10:25:03) Amine Laaguidi (MP): hello'. No indica su nombre ni que es técnico de MP antes de entrar en materia técnica.", formNote: "" }
@@ -232,7 +232,7 @@ function ticket19449(){
     puntos: 1.2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject y AC coherentes con la petición", aiVerdict: "good", verdict: "good", note: "El subject 'S4L' es coherente con la solicitud de activar/verificar parámetros Sigma4Lifts, y el cliente aporta el AC: '(9:58:54) 0676 7798002: Ac Nummer ist 581455'.", formNote: "" }
+        { label: "Subject y AC coherentes con la petición", aiVerdict: "good", verdict: "bad", note: "El subject 'S4L' es coherente con la solicitud de activar/verificar parámetros Sigma4Lifts, y el cliente aporta el AC: '(9:58:54) 0676 7798002: Ac Nummer ist 581455'.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación por nombre", aiVerdict: "warn", verdict: "warn", note: "Primera respuesta pública: '(10:01:02) Amine Laaguidi (MP): Hallo'. No se identifica por su nombre.", formNote: "" }
@@ -280,6 +280,7 @@ function ticket19913(){
     puntos: 1.3,
     aspectos: [
       { nombre: "Campos del ticket", items: [
+        { label: "Asunto sin formato \"Maniobra. Problema\"", aiVerdict: "bad", verdict: "bad", note: "El asunto solo indica la maniobra (\"MB\") sin describir el problema.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." },
         { label: "Nota interna informal ajena al diagnóstico", aiVerdict: "warn", verdict: "warn", note: "La nota privada previa al chat público es informal y no aporta información del caso: '(2026-07-23T06:56:33Z) Amine Laaguidi (MP) | PRIVADO/NOTA INTERNA: Kyo qué estas, de Kamal ? jejeje', un uso poco profesional del campo de documentación interna.", formNote: "" }
       ]},
       { nombre: "Presentación tras asignación", items: [
@@ -304,6 +305,7 @@ function ticket19382(){
     puntos: 1.3,
     aspectos: [
       { nombre: "Campos del ticket", items: [
+        { label: "Asunto sin formato \"Maniobra. Problema\"", aiVerdict: "bad", verdict: "bad", note: "El asunto solo indica la maniobra (\"ecoGO\") sin describir el problema.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." },
         { label: "El ticket mezcla dos incidencias distintas sin diferenciarlas", aiVerdict: "warn", verdict: "warn", note: "Bajo el mismo ticket se atienden dos temas distintos -el desnivel en pisos cortos y la programación del teléfono/interfono- sin que quede reflejado por separado en los campos, lo que dificulta el seguimiento posterior.", formNote: "" }
       ]},
       { nombre: "Presentación tras asignación", items: [
@@ -352,7 +354,7 @@ function ticket20204(){
     puntos: 1.6,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject y AC coherentes con la consulta", aiVerdict: "good", verdict: "good", note: "El subject 'Reveco' coincide con la consulta sobre la placa, y el cliente aporta el número de instalación: '(8:23:31) Anton Font: Anton Font de Ascensors Camprubí, instalación nº AC-2013-156431'.", formNote: "" }
+        { label: "Subject y AC coherentes con la consulta", aiVerdict: "good", verdict: "bad", note: "El subject 'Reveco' coincide con la consulta sobre la placa, y el cliente aporta el número de instalación: '(8:23:31) Anton Font: Anton Font de Ascensors Camprubí, instalación nº AC-2013-156431'.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Saluda sin presentarse por nombre", aiVerdict: "warn", verdict: "warn", note: "Primera respuesta pública: '(8:24:27) Amine Laaguidi (MP): Buenos días / como le podemos ayudaR?'.", formNote: "" }
@@ -424,6 +426,7 @@ function ticket19203(){
     puntos: 1.3,
     aspectos: [
       { nombre: "Campos del ticket", items: [
+        { label: "Asunto sin formato \"Maniobra. Problema\"", aiVerdict: "bad", verdict: "bad", note: "El asunto solo dice \"Frenos\", sin indicar la maniobra.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." },
         { label: "Mensaje de cierre duplicado", aiVerdict: "warn", verdict: "warn", note: "El mensaje formal de cierre se envía dos veces seguidas con el mismo texto: '(15:13:06) Amine Laaguidi (MP): Votre question ayant été résolue...' y '(15:13:08) Amine Laaguidi (MP): Votre question ayant été résolue...', señal de un desliz al gestionar el cierre del ticket.", formNote: "" }
       ]},
       { nombre: "Presentación tras asignación", items: [
@@ -765,7 +768,7 @@ function ticket18886(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject genérico sin actualizar tras diagnóstico", aiVerdict: "warn", verdict: "warn", note: "El subject 'Conversación con KB' es el nombre autogenerado del chat y no se actualizó pese a que el problema quedó bien definido (fallo de contacto MPC en puertas de cabina, ver '(15:28:22) You have a fault with the MPC Puertas contact'); tampoco se registra un número de AC/pedido MP, solo la referencia interna del cliente 'CL1829-2' (15:27:54).", formNote: "" }
+        { label: "Subject genérico sin actualizar tras diagnóstico", aiVerdict: "warn", verdict: "bad", note: "El subject 'Conversación con KB' es el nombre autogenerado del chat y no se actualizó pese a que el problema quedó bien definido (fallo de contacto MPC en puertas de cabina, ver '(15:28:22) You have a fault with the MPC Puertas contact'); tampoco se registra un número de AC/pedido MP, solo la referencia interna del cliente 'CL1829-2' (15:27:54).", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Saludo sin presentación explícita", aiVerdict: "warn", verdict: "warn", note: "La primera respuesta pública de Javier es '(15:28:02) Javier Sosa Jimenez (MP): Buenas Tardes.', sin mencionar su nombre ni que es técnico de MP; el cliente lo identifica solo por el nombre que muestra el sistema en el remitente.", formNote: "" }
@@ -790,7 +793,7 @@ function ticket19866(){
     puntos: 1.3,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject coherente con el problema reportado", aiVerdict: "good", verdict: "good", note: "El subject 'En lenta va dando pequeños botes y no llega bien a planta' coincide literalmente con la descripción del cliente '(11:38:33) En lenta va dando pequeños botes y no llega bien a planta' y con el vídeo adjunto del variador, además de indicar AC 30241.", formNote: "" }
+        { label: "Subject coherente con el problema reportado", aiVerdict: "good", verdict: "bad", note: "El subject 'En lenta va dando pequeños botes y no llega bien a planta' coincide literalmente con la descripción del cliente '(11:38:33) En lenta va dando pequeños botes y no llega bien a planta' y con el vídeo adjunto del variador, además de indicar AC 30241.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación por nombre", aiVerdict: "warn", verdict: "warn", note: "La primera respuesta pública es '(11:52:12) Javier Sosa Jimenez (MP): BUenas Tardes.' sin identificarse por nombre ni como técnico de MP.", formNote: "" }
@@ -838,7 +841,7 @@ function ticket18992(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject coherente pero falta AC/referencia del ascensor", aiVerdict: "warn", verdict: "warn", note: "El subject 'ASISTENCIA TECNICA JUAN SENKEL' refleja el correo original, pero en ningún momento se solicita ni se registra el número de AC/referencia MP del ascensor 'SIRENAS', solo el nombre comercial del equipo.", formNote: "" }
+        { label: "Subject coherente pero falta AC/referencia del ascensor", aiVerdict: "warn", verdict: "bad", note: "El subject 'ASISTENCIA TECNICA JUAN SENKEL' refleja el correo original, pero en ningún momento se solicita ni se registra el número de AC/referencia MP del ascensor 'SIRENAS', solo el nombre comercial del equipo.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Respuesta sin presentación por nombre", aiVerdict: "warn", verdict: "warn", note: "La primera respuesta pública de Javier es '(2026-07-06T11:55:14Z) Buenas Tardes. ¿No tienes un video que pueda escuchar el ruido?', sin identificarse por su nombre en el texto (solo aparece en el remitente del correo).", formNote: "" }
@@ -862,7 +865,7 @@ function ticket18983(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject genérico autogenerado", aiVerdict: "warn", verdict: "warn", note: "El subject 'Conversación con Sito (Soler)' es el nombre autogenerado del chat y no se actualizó pese a que el problema real (alta SIM en Sigma4, avería de alarma de cabina) queda claro desde el inicio: '(12:03:09) Por favor, activar en Sigma4 la instalación OT 3214'.", formNote: "" }
+        { label: "Subject genérico autogenerado", aiVerdict: "warn", verdict: "bad", note: "El subject 'Conversación con Sito (Soler)' es el nombre autogenerado del chat y no se actualizó pese a que el problema real (alta SIM en Sigma4, avería de alarma de cabina) queda claro desde el inicio: '(12:03:09) Por favor, activar en Sigma4 la instalación OT 3214'.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación explícita, aunque el cliente ya lo identifica", aiVerdict: "warn", verdict: "warn", note: "Primera respuesta: '(12:08:48) Javier Sosa Jimenez (MP): Buenos dias.' sin decir su nombre; más adelante el cliente ya se dirige a él como '(12:35:13) Hola Javi', lo que sugiere que el nombre se conoce por el remitente del chat, no porque Javier se presentara.", formNote: "" }
@@ -886,7 +889,7 @@ function ticket18853(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject y AC coherentes con el contenido", aiVerdict: "good", verdict: "good", note: "El subject 'encoder absoluto' es coherente con la avería reportada ('Fallos constantes en el posicionamiento', AC 498944) y con la nota interna que contextualiza el caso como 'duplex con posicionamiento absoluto' con reset de posición cada 2-3 días.", formNote: "" }
+        { label: "Subject y AC coherentes con el contenido", aiVerdict: "good", verdict: "bad", note: "El subject 'encoder absoluto' es coherente con la avería reportada ('Fallos constantes en el posicionamiento', AC 498944) y con la nota interna que contextualiza el caso como 'duplex con posicionamiento absoluto' con reset de posición cada 2-3 días.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Saludo sin presentación por nombre", aiVerdict: "warn", verdict: "warn", note: "Primera respuesta pública: '(11:07:04) Javier Sosa Jimenez (MP): Buenos dias,' sin mencionar su nombre.", formNote: "" }
@@ -958,7 +961,7 @@ function ticket20148(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject genérico autogenerado", aiVerdict: "warn", verdict: "warn", note: "El subject 'Conversación con Adrián (Asc Norte)' es el nombre autogenerado del chat y no refleja el problema real (llamada memorizada en bajada al arrancar en planta baja); tampoco se registra un número de AC.", formNote: "" }
+        { label: "Subject genérico autogenerado", aiVerdict: "warn", verdict: "bad", note: "El subject 'Conversación con Adrián (Asc Norte)' es el nombre autogenerado del chat y no refleja el problema real (llamada memorizada en bajada al arrancar en planta baja); tampoco se registra un número de AC.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Saludo sin presentación por nombre", aiVerdict: "warn", verdict: "warn", note: "Primera respuesta: '(10:41:13) Javier Sosa Jimenez (MP): Buenos dias.' sin mencionar su nombre.", formNote: "" }
@@ -1033,13 +1036,13 @@ function ticket19529(){
         { label: "Ticket de llamada sin documentación del contenido", aiVerdict: "bad", verdict: "bad", note: "Todo el ticket son metadatos automáticos de la llamada ('Llamada de: Javier Sosa Jimenez (MP)', 'Length of phone call: 17 minutes, 35 seconds') sin ninguna nota que resuma el motivo de la consulta ni la solución dada, lo que impide auditar el contenido real de la asistencia.", formNote: "" }
       ]},
       { nombre: "Presentación tras asignación", items: [
-        { label: "Sin chat público que evaluar", aiVerdict: "warn", verdict: "warn", note: "El ticket no tiene ninguna interacción pública por chat (es una llamada telefónica saliente), por lo que no puede evaluarse la presentación de forma habitual.", formNote: "" }
+        { label: "Sin chat público que evaluar", aiVerdict: "warn", verdict: "good", note: "El ticket no tiene ninguna interacción pública por chat (es una llamada telefónica saliente), por lo que no puede evaluarse la presentación de forma habitual.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]},
       { nombre: "Gestión de la asistencia", items: [
-        { label: "Sin transcripción para valorar la claridad técnica", aiVerdict: "warn", verdict: "warn", note: "Solo se registra la duración de la llamada (17m35s) y la hora; al no existir transcripción ni resumen, no es posible valorar los tiempos de respuesta dentro de la llamada ni la claridad de las explicaciones técnicas dadas.", formNote: "" }
+        { label: "Sin transcripción para valorar la claridad técnica", aiVerdict: "warn", verdict: "good", note: "Solo se registra la duración de la llamada (17m35s) y la hora; al no existir transcripción ni resumen, no es posible valorar los tiempos de respuesta dentro de la llamada ni la claridad de las explicaciones técnicas dadas.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre enviado como nota interna, sin confirmación pública del cliente", aiVerdict: "bad", verdict: "bad", note: "La macro '(2026-07-15T10:47:15Z) Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket...' se envía como PRIVADO/NOTA INTERNA apenas 1 minuto después de finalizar la llamada, sin ningún mensaje público del cliente confirmando la resolución ni resumen de qué se resolvió.", formNote: "" }
+        { label: "Cierre enviado como nota interna, sin confirmación pública del cliente", aiVerdict: "bad", verdict: "good", note: "La macro '(2026-07-15T10:47:15Z) Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket...' se envía como PRIVADO/NOTA INTERNA apenas 1 minuto después de finalizar la llamada, sin ningún mensaje público del cliente confirmando la resolución ni resumen de qué se resolvió.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]}
     ]
   };
@@ -1053,7 +1056,7 @@ function ticket19859(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject incompleto y poco descriptivo", aiVerdict: "warn", verdict: "warn", note: "El asunto del ticket es solo \"Ecogo-\", sin especificar el motivo real de la consulta (reconfigurar el motor tras un ajuste de pesas incompleto), lo que dificulta identificar el caso de un vistazo.", formNote: "" }
+        { label: "Subject incompleto y poco descriptivo", aiVerdict: "warn", verdict: "bad", note: "El asunto del ticket es solo \"Ecogo-\", sin especificar el motivo real de la consulta (reconfigurar el motor tras un ajuste de pesas incompleto), lo que dificulta identificar el caso de un vistazo.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "En su primer mensaje público Pedro se identifica: \"(10:51:59) Pedro Calvo Estallo (MP): Hola\" seguido de \"(10:52:07) Pedro Calvo Estallo (MP): Soy Pedro Calvo\".", formNote: "" }
@@ -1077,7 +1080,7 @@ function ticket19586(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico auto-generado", aiVerdict: "warn", verdict: "warn", note: "El asunto \"Conversación con Víctor Martínez Fernández\" no describe el motivo real (subir la temperatura máxima admisible de la placa), aunque el motivo sí quedó registrado en el chat: \"(11:17:33) Necesito subir la temperatura máxima a la placa por qué hace mucha calor y se bloquea cada poco\".", formNote: "" }
+        { label: "Asunto genérico auto-generado", aiVerdict: "warn", verdict: "bad", note: "El asunto \"Conversación con Víctor Martínez Fernández\" no describe el motivo real (subir la temperatura máxima admisible de la placa), aunque el motivo sí quedó registrado en el chat: \"(11:17:33) Necesito subir la temperatura máxima a la placa por qué hace mucha calor y se bloquea cada poco\".", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "\"(11:23:18) Hola\" / \"(11:23:22) Soy Pedro Calvo\" al entrar en la conversación.", formNote: "" }
@@ -1134,7 +1137,7 @@ function ticket19604(){
         { label: "Escalado adecuado a llamada para avería compleja", aiVerdict: "good", verdict: "good", note: "Tras las fotos iniciales del error, el técnico escala a una llamada telefónica de 16 minutos (\"Length of phone call: 16 minutes, 15 seconds\") para resolver el fallo de variador, un criterio adecuado para este tipo de avería.", formNote: "" }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre inmediato tras la llamada sin constancia escrita de la causa", aiVerdict: "warn", verdict: "warn", note: "El cierre se envía justo tras colgar la llamada: \"(14:55:52) Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket\", pero al tratarse el diagnóstico por teléfono no queda registrada en el chat la causa raíz confirmada.", formNote: "" }
+        { label: "Cierre inmediato tras la llamada sin constancia escrita de la causa", aiVerdict: "warn", verdict: "good", note: "El cierre se envía justo tras colgar la llamada: \"(14:55:52) Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket\", pero al tratarse el diagnóstico por teléfono no queda registrada en el chat la causa raíz confirmada.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]}
     ]
   };
@@ -1149,7 +1152,7 @@ function ticket19769(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject genérico para un caso más específico", aiVerdict: "warn", verdict: "warn", note: "El asunto \"Ecogo - wiring\" es genérico; el caso real trataba de series de seguridad en un cuadro reformado con foso reducido, un tema más concreto que \"wiring\".", formNote: "" }
+        { label: "Subject genérico para un caso más específico", aiVerdict: "warn", verdict: "good", note: "El asunto \"Ecogo - wiring\" es genérico; el caso real trataba de series de seguridad en un cuadro reformado con foso reducido, un tema más concreto que \"wiring\".", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto sigue el formato \"Maniobra. Problema\"; que sea escueto no se penaliza." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "\"(10:27:21) Hola\" / \"(10:27:26) Soy Pedro Calvo\".", formNote: "" }
@@ -1173,7 +1176,7 @@ function ticket19549(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject y motivo de consulta sin identificar", aiVerdict: "warn", verdict: "warn", note: "El asunto \"Conversación con Jj\" no identifica el motivo de la consulta ni el ascensor afectado; solo constan fotos sin descripción textual del cliente.", formNote: "" }
+        { label: "Subject y motivo de consulta sin identificar", aiVerdict: "warn", verdict: "bad", note: "El asunto \"Conversación con Jj\" no identifica el motivo de la consulta ni el ascensor afectado; solo constan fotos sin descripción textual del cliente.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación por nombre pero en idioma distinto al elegido por el cliente", aiVerdict: "warn", verdict: "warn", note: "El cliente había seleccionado francés en el bot (\"(14:12:38) Jj: Français\") pero Pedro se presenta y atiende en inglés: \"(14:29:47) Hi\" / \"(14:29:52) this is Pedro Calvo\".", formNote: "" }
@@ -1222,7 +1225,7 @@ function ticket19564(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject genérico sin describir el fallo", aiVerdict: "warn", verdict: "warn", note: "El asunto \"Conversación con Antonio Agüera García\" no especifica el problema real: un fallo de lectura del contacto MPC tras una puesta en marcha con placas nuevas.", formNote: "" }
+        { label: "Subject genérico sin describir el fallo", aiVerdict: "warn", verdict: "bad", note: "El asunto \"Conversación con Antonio Agüera García\" no especifica el problema real: un fallo de lectura del contacto MPC tras una puesta en marcha con placas nuevas.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "\"(9:11:04) Buenos dias\" / \"(9:11:11) Soy Pedro Calvo\".", formNote: "" }
@@ -1270,7 +1273,7 @@ function ticket19755(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject genérico para una avería recurrente ya conocida", aiVerdict: "warn", verdict: "warn", note: "El asunto \"Conversación con Juan Luis (Iza)\" no refleja que se trata de una avería intermitente recurrente, referenciada por el propio cliente: \"(8:42:07) El 17 junio ya estuvimos conectaros este ascensor, ticket 18138\".", formNote: "" }
+        { label: "Subject genérico para una avería recurrente ya conocida", aiVerdict: "warn", verdict: "bad", note: "El asunto \"Conversación con Juan Luis (Iza)\" no refleja que se trata de una avería intermitente recurrente, referenciada por el propio cliente: \"(8:42:07) El 17 junio ya estuvimos conectaros este ascensor, ticket 18138\".", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "\"(8:51:32) Buenos dias\" / \"(8:51:43) Soy Pedro Calvo\".", formNote: "" }
@@ -1318,7 +1321,7 @@ function ticket19896(){
     puntos: 1.2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject poco preciso para el problema real", aiVerdict: "warn", verdict: "warn", note: "El asunto \"Ecogo - wiring\" no encaja bien con el problema real, un bloqueo de comunicación con la Head (HEA) durante una actualización de software, más que un problema de cableado.", formNote: "" }
+        { label: "Subject poco preciso para el problema real", aiVerdict: "warn", verdict: "good", note: "El asunto \"Ecogo - wiring\" no encaja bien con el problema real, un bloqueo de comunicación con la Head (HEA) durante una actualización de software, más que un problema de cableado.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto sigue el formato \"Maniobra. Problema\"; que sea escueto no se penaliza." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "\"(14:51:43) Hola\" / \"(14:51:48) Soy Pedro Calvo\" / \"(14:52:03) en que puedo ayudarte\".", formNote: "" }
@@ -1422,7 +1425,7 @@ function ticket19542(){
         { label: "Respuesta rápida y resolución por llamada", aiVerdict: "good", verdict: "good", note: "Carlos responde en menos de un minuto tras el mensaje del cliente (13:31:09) y resuelve la incidencia mediante una llamada saliente de 3 minutos 41 segundos registrada en nota privada (11:45:47 UTC).", formNote: "" }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre comunicado solo en nota interna, sin confirmación pública del cliente", aiVerdict: "bad", verdict: "bad", note: "El cierre se declara únicamente en una nota privada ('Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket...', 11:54:04) que el cliente no ve; no existe ningún mensaje público posterior a la llamada en el que el cliente confirme que su duda quedó resuelta.", formNote: "" }
+        { label: "Cierre comunicado solo en nota interna, sin confirmación pública del cliente", aiVerdict: "bad", verdict: "good", note: "El cierre se declara únicamente en una nota privada ('Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket...', 11:54:04) que el cliente no ve; no existe ningún mensaje público posterior a la llamada en el que el cliente confirme que su duda quedó resuelta.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]}
     ]
   };
@@ -1485,7 +1488,7 @@ function ticket19313(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Coherencia entre versión de software indicada y diagnóstico", aiVerdict: "good", verdict: "good", note: "El asunto 'SYNGO 02.08.00' se corresponde con el diagnóstico de Carlos sobre un posible problema de software del operador de puertas ('vamos a ver el software del syngo... si eso actualizamos el syngo', 10:50:07/35).", formNote: "" }
+        { label: "Coherencia entre versión de software indicada y diagnóstico", aiVerdict: "good", verdict: "bad", note: "El asunto 'SYNGO 02.08.00' se corresponde con el diagnóstico de Carlos sobre un posible problema de software del operador de puertas ('vamos a ver el software del syngo... si eso actualizamos el syngo', 10:50:07/35).", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación explícita por nombre", aiVerdict: "good", verdict: "good", note: "Carlos se identifica expresamente con 'soy Carlos' (9:15:08) en su primera intervención pública del ticket, tras pedir los datos de conexión.", formNote: "" }
@@ -1605,7 +1608,7 @@ function ticket19178(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico 'Syngo' para un contenido de reclamación de material", aiVerdict: "warn", verdict: "warn", note: "El asunto es simplemente 'Syngo', sin reflejar que el contenido real es la reclamación de una placa defectuosa ('habria que reclamar la placa, como habeis reclamado la anterior??', 11:49:08).", formNote: "" }
+        { label: "Asunto genérico 'Syngo' para un contenido de reclamación de material", aiVerdict: "warn", verdict: "bad", note: "El asunto es simplemente 'Syngo', sin reflejar que el contenido real es la reclamación de una placa defectuosa ('habria que reclamar la placa, como habeis reclamado la anterior??', 11:49:08).", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación por nombre", aiVerdict: "warn", verdict: "warn", note: "Carlos abre con 'Buenas' (11:48:54) sin decir su nombre; el cliente lo identifica igualmente al despedirse ('Muchísimas gracias, Carlos', 12:06:14).", formNote: "" }
@@ -1676,7 +1679,7 @@ function ticket20168(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto poco descriptivo del problema real", aiVerdict: "warn", verdict: "warn", note: "El subject 'Ecogo syngo' no refleja el motivo real registrado por el cliente: 'Problema con las puertas' (12:28:58) y la avería final de cerrojo mecánico en planta inferior; la tipificación de apertura parece imprecisa.", formNote: "" }
+        { label: "Asunto poco descriptivo del problema real", aiVerdict: "warn", verdict: "good", note: "El subject 'Ecogo syngo' no refleja el motivo real registrado por el cliente: 'Problema con las puertas' (12:28:58) y la avería final de cerrojo mecánico en planta inferior; la tipificación de apertura parece imprecisa.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto sigue el formato \"Maniobra. Problema\"; que sea escueto no se penaliza." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación por nombre en primera respuesta pública", aiVerdict: "good", verdict: "good", note: "Tras la asignación, Eduardo escribe 'Hola Julio / soy Eduardo de Soporte tecnico MP / nos conectamos' (12:31:39-53).", formNote: "" }
@@ -1709,7 +1712,7 @@ function ticket18877(){
         { label: "Seguimiento correcto pero con silencios por disponibilidad mutua", aiVerdict: "warn", verdict: "warn", note: "El caso se alarga entre el 2 y el 3 de julio con huecos donde ninguna de las partes está disponible: el cliente avisa 'ahora mismo no estoy en la unidad' (9:26:55) y horas después 'Cuando puedas por favor' (11:58:20); no es enteramente atribuible a Eduardo, pero el seguimiento se dilata.", formNote: "" }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre inmediato tras llamada sin confirmación escrita del cliente", aiVerdict: "warn", verdict: "warn", note: "El cierre 'Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket...' (13:00:42) se envía justo después de una llamada de 52 minutos cuyo contenido no consta en la transcripción pública; no hay ningún mensaje del cliente confirmando por escrito que el problema quedó resuelto.", formNote: "" }
+        { label: "Cierre inmediato tras llamada sin confirmación escrita del cliente", aiVerdict: "warn", verdict: "good", note: "El cierre 'Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket...' (13:00:42) se envía justo después de una llamada de 52 minutos cuyo contenido no consta en la transcripción pública; no hay ningún mensaje del cliente confirmando por escrito que el problema quedó resuelto.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]}
     ]
   };
@@ -1941,7 +1944,7 @@ function ticket19324(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject genérico frente al contenido real", aiVerdict: "warn", verdict: "warn", note: "El subject 'Ecogo---Setting' es genérico frente al contenido real, un fallo concreto: \"Fehler 29.00.92\" (11:57:34) relacionado con el sensor acelerómetro, que hubiera merecido una tipificación más específica.", formNote: "" }
+        { label: "Subject genérico frente al contenido real", aiVerdict: "warn", verdict: "good", note: "El subject 'Ecogo---Setting' es genérico frente al contenido real, un fallo concreto: \"Fehler 29.00.92\" (11:57:34) relacionado con el sensor acelerómetro, que hubiera merecido una tipificación más específica.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto sigue el formato \"Maniobra. Problema\"; que sea escueto no se penaliza." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Ausencia de presentación por nombre", aiVerdict: "warn", verdict: "warn", note: "La primera respuesta pública es \"wie kann ich dir helfen..\" (11:21:34), sin presentarse por nombre.", formNote: "" }
@@ -2013,7 +2016,7 @@ function ticket19118(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject genérico frente al alcance real", aiVerdict: "warn", verdict: "warn", note: "El subject 'Ecogo---Setting' resulta genérico para el alcance real del ticket, que incluyó envío de clave de activación, revisión en modo MES, creación de un ADI y un video de autotuning.", formNote: "" }
+        { label: "Subject genérico frente al alcance real", aiVerdict: "warn", verdict: "good", note: "El subject 'Ecogo---Setting' resulta genérico para el alcance real del ticket, que incluyó envío de clave de activación, revisión en modo MES, creación de un ADI y un video de autotuning.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto sigue el formato \"Maniobra. Problema\"; que sea escueto no se penaliza." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Ausencia de presentación por nombre", aiVerdict: "warn", verdict: "warn", note: "La primera respuesta pública entrega directamente la clave de activación (\"guten morgen...hier das nummer 4-BBB1-7CBC\", 13:06:20) sin presentación por nombre.", formNote: "" }
@@ -2133,7 +2136,7 @@ function ticket19400(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject genérico frente a la gravedad del caso", aiVerdict: "warn", verdict: "warn", note: "El subject 'Ecogo--Setting' es demasiado genérico para un caso que escaló a un conflicto sobre los parámetros del botón de ático (penthouse) sin resolver durante más de un día.", formNote: "" }
+        { label: "Subject genérico frente a la gravedad del caso", aiVerdict: "warn", verdict: "good", note: "El subject 'Ecogo--Setting' es demasiado genérico para un caso que escaló a un conflicto sobre los parámetros del botón de ático (penthouse) sin resolver durante más de un día.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto sigue el formato \"Maniobra. Problema\"; que sea escueto no se penaliza." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Ausencia de presentación por nombre", aiVerdict: "warn", verdict: "warn", note: "La primera respuesta \"Ich schicke dir die Installationsparameter, wie du es mir vorher gebeten hast\" (12:33:46) no incluye presentación por nombre.", formNote: "" }
@@ -2205,16 +2208,16 @@ function ticket20282(){
     puntos: 5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico sin contenido técnico documentado", aiVerdict: "warn", verdict: "warn", note: "El asunto 'Conversación con Sito (Soler)' no describe ninguna avería concreta; el cliente solo aporta la referencia del ascensor ('626085', 10:40) y pide ser llamado ('Puede llamarme alguien?', 10:24:14), sin que el motivo técnico quede reflejado por escrito.", formNote: "" }
+        { label: "Asunto genérico sin contenido técnico documentado", aiVerdict: "warn", verdict: "bad", note: "El asunto 'Conversación con Sito (Soler)' no describe ninguna avería concreta; el cliente solo aporta la referencia del ascensor ('626085', 10:40) y pide ser llamado ('Puede llamarme alguien?', 10:24:14), sin que el motivo técnico quede reflejado por escrito.", formNote: "Fernando (12 oct 2026): El asunto \"Conversación con....\" muestra que no se ha tocado. Es el que Zendesk pone por defecto. Siempre es negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Ausencia de presentación por nombre", aiVerdict: "bad", verdict: "bad", note: "En su primera respuesta pública (10:38:28) Michael escribe solo 'buens dias' / 'en que te puedo ayudar' sin identificarse por su nombre en ningún momento del ticket.", formNote: "" }
       ]},
       { nombre: "Gestión de la asistencia", items: [
-        { label: "Resolución dependiente de llamadas telefónicas no documentadas", aiVerdict: "warn", verdict: "warn", note: "El diagnóstico se concentra en dos llamadas salientes (7 min 37 s y 4 min 39 s, notas privadas 08:49 y 08:59) cuyo contenido técnico no queda registrado por escrito en el chat público, dificultando auditar la calidad de la explicación dada.", formNote: "" }
+        { label: "Resolución dependiente de llamadas telefónicas no documentadas", aiVerdict: "warn", verdict: "good", note: "El diagnóstico se concentra en dos llamadas salientes (7 min 37 s y 4 min 39 s, notas privadas 08:49 y 08:59) cuyo contenido técnico no queda registrado por escrito en el chat público, dificultando auditar la calidad de la explicación dada.", formNote: "Fernando (12 oct 2026): En las llamadas, mientras no tengamos la transcripción para decidir, daremos por cierto que se han resuelto los problemas, si el resto de conversación no dice lo contrario." }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre sin confirmación pública del cliente", aiVerdict: "warn", verdict: "warn", note: "El mensaje de cierre (11:03:08) 'Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket' se envía sin ninguna confirmación visible del cliente en el chat público tras las llamadas; la causa raíz no queda reflejada por escrito, aunque no hay evidencia clara de mala praxis.", formNote: "" }
+        { label: "Cierre sin confirmación pública del cliente", aiVerdict: "warn", verdict: "good", note: "El mensaje de cierre (11:03:08) 'Dado que tu consulta ha sido resuelta, procederemos al cierre del ticket' se envía sin ninguna confirmación visible del cliente en el chat público tras las llamadas; la causa raíz no queda reflejada por escrito, aunque no hay evidencia clara de mala praxis.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]}
     ]
   };
@@ -2235,11 +2238,11 @@ function ticket20329(){
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "En su primera respuesta pública (10:30:37) Michael escribe 'Je m'appelle Michael Prieto (traduit)', identificándose correctamente.", formNote: "" }
       ]},
       { nombre: "Gestión de la asistencia", items: [
-        { label: "ANOMALÍA DE ATRIBUCIÓN: la asistencia visible pasa a ser realizada por Amine Laaguidi, no por Michael", aiVerdict: "bad", verdict: "bad", note: "Tras la nota privada de Amine Laaguidi (09:10:20) 'que te de el TeamViewer y lo vemos', es Amine quien conduce el diagnóstico público desde (11:19:40) 'nous avons besoin du TeamViewer...', pide la contraseña (11:28:53) y reporta el fallo de conexión (11:34:49) 'malheureusement toujours pas de conexion', mientras Michael prácticamente desaparece del hilo. Es el mismo patrón de anomalía de atribución Michael/Amine detectado en una ronda anterior.", formNote: "" },
+        { label: "ANOMALÍA DE ATRIBUCIÓN: la asistencia visible pasa a ser realizada por Amine Laaguidi, no por Michael", aiVerdict: "bad", verdict: "warn", note: "Tras la nota privada de Amine Laaguidi (09:10:20) 'que te de el TeamViewer y lo vemos', es Amine quien conduce el diagnóstico público desde (11:19:40) 'nous avons besoin du TeamViewer...', pide la contraseña (11:28:53) y reporta el fallo de conexión (11:34:49) 'malheureusement toujours pas de conexion', mientras Michael prácticamente desaparece del hilo. Es el mismo patrón de anomalía de atribución Michael/Amine detectado en una ronda anterior.", formNote: "Fernando (12 oct 2026): Amine, viendo el asunto y el AC, decide tomarlo y le pide permiso a Michael; Amine cierra el ticket en nombre de Michael. No podemos penalizar a Michael por esto." },
         { label: "Silencio prolongado tras la incidencia del cliente", aiVerdict: "warn", verdict: "warn", note: "Cuando el cliente avisa de una urgencia y se ausenta (13:34:26) 'j'avais une urgence... suis partie je reviens vers vous', no hay más seguimiento activo hasta el cierre, casi 2h30 después (14:05:13).", formNote: "" }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre sin confirmación de resolución, motivado por la ausencia del cliente", aiVerdict: "bad", verdict: "bad", note: "El ticket se cierra (14:05:13) con el mensaje genérico de cierre sin que el cliente haya confirmado en ningún momento que el problema de telealarma quedó resuelto; el cliente solo había avisado de una urgencia y que volvería, lo que constituye un cierre por motivo ajeno a la resolución real.", formNote: "" }
+        { label: "Cierre sin confirmación de resolución, motivado por la ausencia del cliente", aiVerdict: "bad", verdict: "warn", note: "El ticket se cierra (14:05:13) con el mensaje genérico de cierre sin que el cliente haya confirmado en ningún momento que el problema de telealarma quedó resuelto; el cliente solo había avisado de una urgencia y que volvería, lo que constituye un cierre por motivo ajeno a la resolución real.", formNote: "Fernando (12 oct 2026): El cierre lo hace Amine tras ausencia de respuesta del cliente. No penalizaremos a Michael por esto." }
       ]}
     ]
   };
@@ -2254,7 +2257,7 @@ function ticket20001(){
     puntos: 1.2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Coherencia subject/contenido (bono agotado)", aiVerdict: "good", verdict: "good", note: "El asunto incluye 'Tiene bono', coherente con el desenlace del caso, donde Michael indica (12:23:57) 'el tiempo del bono se a acabado'.", formNote: "" }
+        { label: "Coherencia subject/contenido (bono agotado)", aiVerdict: "good", verdict: "bad", note: "El asunto incluye 'Tiene bono', coherente con el desenlace del caso, donde Michael indica (12:23:57) 'el tiempo del bono se a acabado'.", formNote: "Fernando (12 oct 2026): Las notas de bono en el asunto son para no despistarnos; si finalmente se atiende al cliente, hay que tener todos los campos y tratar la asistencia como una cualquiera." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "En su primera intervención pública (11:09:50) Michael escribe 'mi nombre es michael prieto'.", formNote: "" }
@@ -2263,7 +2266,7 @@ function ticket20001(){
         { label: "Colaboración de varios técnicos sin pérdida de continuidad", aiVerdict: "good", verdict: "good", note: "Javier Sosa Jimenez se suma aportando datos de fábrica sobre el software original (13:28:22 en adelante: 'te confirmo que desde fabrica se ha enviado como te he marcado') sin que se rompa la continuidad de la conversación con el cliente.", formNote: "" }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre motivado por agotamiento del bono, no por resolución confirmada", aiVerdict: "bad", verdict: "bad", note: "El ticket se cierra (12:31:27) justo después de que Michael explique (12:23:57) 'el tiempo del bono se a acabado' y sugiera comprar uno nuevo el lunes, sin que el cliente haya confirmado que el problema de configuración de embarques (P00009/10/11) quedó resuelto.", formNote: "" }
+        { label: "Cierre motivado por agotamiento del bono, no por resolución confirmada", aiVerdict: "bad", verdict: "good", note: "El ticket se cierra (12:31:27) justo después de que Michael explique (12:23:57) 'el tiempo del bono se a acabado' y sugiera comprar uno nuevo el lunes, sin que el cliente haya confirmado que el problema de configuración de embarques (P00009/10/11) quedó resuelto.", formNote: "Fernando (12 oct 2026): Es correcto. Los bonos dan para 1/2 hora de asistencia telefónica; si se prolonga demasiado, podemos y debemos decirle al cliente (tipo 3) que compre más bonos." }
       ]}
     ]
   };
@@ -2278,7 +2281,7 @@ function ticket19277(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico sin describir la avería real", aiVerdict: "warn", verdict: "warn", note: "El asunto 'Conversación con Zakaria Ziane...' no refleja el problema real: tarjetas MCB y SASE que no encienden y fallo de comunicación con el ascensor durante la puesta en marcha ('J'arrive pas a communiqué avec l'ascenseur', 12:21:35).", formNote: "" }
+        { label: "Asunto genérico sin describir la avería real", aiVerdict: "warn", verdict: "bad", note: "El asunto 'Conversación con Zakaria Ziane...' no refleja el problema real: tarjetas MCB y SASE que no encienden y fallo de comunicación con el ascensor durante la puesta en marcha ('J'arrive pas a communiqué avec l'ascenseur', 12:21:35).", formNote: "Fernando (12 oct 2026): Todo ticket con asunto \"Conversación con...\" está mal gestionado." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación por nombre en la primera respuesta", aiVerdict: "bad", verdict: "bad", note: "La primera respuesta pública de Michael (12:18:23-12:18:36) es solo 'Bonjour (traduit)' / 'Comment puis-je t'aider (traduit)', sin identificarse en ningún momento del ticket.", formNote: "" }
@@ -2302,7 +2305,7 @@ function ticket20301(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Coherencia subject/contenido", aiVerdict: "good", verdict: "good", note: "El contenido (solicitud de esquema y dudas sobre cableado de freno y micros) es coherente con una consulta técnica de soporte a instalador, aunque el asunto sigue siendo el nombre genérico del cliente.", formNote: "" }
+        { label: "Coherencia subject/contenido", aiVerdict: "good", verdict: "bad", note: "El contenido (solicitud de esquema y dudas sobre cableado de freno y micros) es coherente con una consulta técnica de soporte a instalador, aunque el asunto sigue siendo el nombre genérico del cliente.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación por nombre", aiVerdict: "bad", verdict: "bad", note: "En su primera respuesta pública (13:35:33-13:35:38) Michael escribe 'buenas tardes' / 'ya reviso' sin mencionar su nombre.", formNote: "" }
@@ -2326,7 +2329,7 @@ function ticket18829(){
     puntos: 1.3,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico para una incidencia de seguridad", aiVerdict: "warn", verdict: "warn", note: "El asunto no refleja la gravedad real del caso: 'This lift is trapping people always in the top floor' (7:57:26).", formNote: "" }
+        { label: "Asunto genérico para una incidencia de seguridad", aiVerdict: "warn", verdict: "bad", note: "El asunto no refleja la gravedad real del caso: 'This lift is trapping people always in the top floor' (7:57:26).", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación por nombre", aiVerdict: "bad", verdict: "bad", note: "La primera respuesta pública (8:24:41-8:25:14) es 'good morning' / 'di you check the limit swicth' sin identificarse como Michael.", formNote: "" }
@@ -2350,6 +2353,7 @@ function ticket19933(){
     puntos: 1.1,
     aspectos: [
       { nombre: "Campos del ticket", items: [
+        { label: "Asunto por defecto de Zendesk sin editar", aiVerdict: "bad", verdict: "bad", note: "El asunto conserva el texto autogenerado \"Conversación con…\" y no sigue el formato \"Maniobra. Problema\".", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." },
         { label: "Puntuación baja frente a la extensión real de la asistencia", aiVerdict: "warn", verdict: "warn", note: "La sesión se prolonga más de 1h20 (11:01 a 12:26) con calibraciones sucesivas y sustitución de la tarjeta de pesaje, un esfuerzo que contrasta con los 1.1 puntos asignados al ticket.", formNote: "" }
       ]},
       { nombre: "Presentación tras asignación", items: [
@@ -2374,7 +2378,7 @@ function ticket18848(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico frente a un caso técnico detallado", aiVerdict: "warn", verdict: "warn", note: "El asunto 'Conversación con Jordi (Ramase)' no refleja el contenido real: discrepancia de parámetros de variador tras un cambio de máquina y pulsadores de cabina dañados.", formNote: "" }
+        { label: "Asunto genérico frente a un caso técnico detallado", aiVerdict: "warn", verdict: "bad", note: "El asunto 'Conversación con Jordi (Ramase)' no refleja el contenido real: discrepancia de parámetros de variador tras un cambio de máquina y pulsadores de cabina dañados.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación por nombre", aiVerdict: "bad", verdict: "bad", note: "En su primera respuesta pública (10:21:49-10:22:03) Michael escribe 'buenos dias' / 'no te deja cambia los parametros' sin decir su nombre.", formNote: "" }
@@ -2398,7 +2402,7 @@ function ticket20219(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto no describe la avería real", aiVerdict: "warn", verdict: "warn", note: "El asunto genérico no menciona el problema real: una maniobra Syngo recién sustituida que no completa el aprendizaje de puertas.", formNote: "" }
+        { label: "Asunto no describe la avería real", aiVerdict: "warn", verdict: "bad", note: "El asunto genérico no menciona el problema real: una maniobra Syngo recién sustituida que no completa el aprendizaje de puertas.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "En su segunda intervención pública (10:57:30) Michael escribe 'Je m'appelle Michael (traduit)'.", formNote: "" }
@@ -2422,7 +2426,7 @@ function ticket20289(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico para una asistencia de instalación con varias dudas técnicas", aiVerdict: "warn", verdict: "warn", note: "El asunto no refleja el contenido real: dudas de conexionado de finales de carrera y placa REV durante una instalación (XRVMR, XLSF, XLSH).", formNote: "" }
+        { label: "Asunto genérico para una asistencia de instalación con varias dudas técnicas", aiVerdict: "warn", verdict: "bad", note: "El asunto no refleja el contenido real: dudas de conexionado de finales de carrera y placa REV durante una instalación (XRVMR, XLSF, XLSH).", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación por nombre", aiVerdict: "bad", verdict: "bad", note: "En su primera respuesta pública (11:46:09-11:46:17) Michael escribe 'buenos dias' / 'en que te puedo ayudar' sin identificarse.", formNote: "" }
@@ -2446,16 +2450,16 @@ function ticket20367(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto muy genérico para una incidencia compleja de varios días", aiVerdict: "warn", verdict: "warn", note: "'ecoGO - RESET' no refleja la magnitud real del caso, que se extiende del 31/07 al 05/08 e incluye pérdida de nivel ZD/ZS, cambio de software, ajuste de puertas, sismógrafo, extractor y nivelación.", formNote: "" }
+        { label: "Asunto muy genérico para una incidencia compleja de varios días", aiVerdict: "warn", verdict: "good", note: "'ecoGO - RESET' no refleja la magnitud real del caso, que se extiende del 31/07 al 05/08 e incluye pérdida de nivel ZD/ZS, cambio de software, ajuste de puertas, sismógrafo, extractor y nivelación.", formNote: "Fernando (12 oct 2026): Responde al formato \"Maniobra. Problema\"; el reset/posicionamiento es tan común que se abrevia." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Michael no se presenta por nombre en ningún momento del ticket", aiVerdict: "warn", verdict: "warn", note: "Su primera intervención visible (08-04, 14:20:55) es directamente '¿ya lubricaron las guias?' sin identificarse; dado que el ticket lo trabajan varios técnicos, no queda claro para el cliente quién es el responsable asignado.", formNote: "" }
       ]},
       { nombre: "Gestión de la asistencia", items: [
-        { label: "ANOMALÍA DE ATRIBUCIÓN: el grueso de la asistencia técnica visible corresponde a Amine Laaguidi y, sobre todo, a Javier Sosa Jimenez, no a Michael", aiVerdict: "bad", verdict: "bad", note: "Desde el 31/07 (Amine hace el triaje inicial, 17:40-17:51) hasta el 03 y 04/08 (Javier Sosa Jimenez conduce toda la sesión técnica por TeamViewer: software, ajuste de puertas, imanes, nivelación), Michael solo aparece brevemente el 04/08 y 05/08 con preguntas de seguimiento ('como vas', 'algo nuevo''), sin ser quien diagnostica; es el mismo patrón de anomalía Michael/Amine detectado en una ronda anterior, aquí extendido también a Javier Sosa Jimenez.", formNote: "" }
+        { label: "ANOMALÍA DE ATRIBUCIÓN: el grueso de la asistencia técnica visible corresponde a Amine Laaguidi y, sobre todo, a Javier Sosa Jimenez, no a Michael", aiVerdict: "bad", verdict: "warn", note: "Desde el 31/07 (Amine hace el triaje inicial, 17:40-17:51) hasta el 03 y 04/08 (Javier Sosa Jimenez conduce toda la sesión técnica por TeamViewer: software, ajuste de puertas, imanes, nivelación), Michael solo aparece brevemente el 04/08 y 05/08 con preguntas de seguimiento ('como vas', 'algo nuevo''), sin ser quien diagnostica; es el mismo patrón de anomalía Michael/Amine detectado en una ronda anterior, aquí extendido también a Javier Sosa Jimenez.", formNote: "Fernando (12 oct 2026): Javier la coge para seguirla él. No podemos penalizar a Michael por eso." }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre por fin de turno del técnico, sin confirmación de resolución", aiVerdict: "bad", verdict: "bad", note: "El 05/08 el cliente indica 'Todavía nos está dando problemas el ascensor' (13:51:47) y 'Estamos contra pensándolo' (14:25:17, aún ajustando), y Michael cierra el ticket diciendo 'yo termino a las 2... cierro este ticket' (14:34:53), un motivo ajeno a la resolución real, incumpliendo la regla de cierre aceptable.", formNote: "" }
+        { label: "Cierre por fin de turno del técnico, sin confirmación de resolución", aiVerdict: "bad", verdict: "warn", note: "El 05/08 el cliente indica 'Todavía nos está dando problemas el ascensor' (13:51:47) y 'Estamos contra pensándolo' (14:25:17, aún ajustando), y Michael cierra el ticket diciendo 'yo termino a las 2... cierro este ticket' (14:34:53), un motivo ajeno a la resolución real, incumpliendo la regla de cierre aceptable.", formNote: "Fernando (12 oct 2026): Es Javier quien la coge para seguirla y la cierra a nombre de Michael. No podemos penalizar a Michael por eso." }
       ]}
     ]
   };
@@ -2470,7 +2474,7 @@ function ticket18927(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto demasiado genérico ('Ecogo')", aiVerdict: "warn", verdict: "warn", note: "El asunto no identifica el tema real de la consulta: procedimiento de sustitución de variador y autotuning tras el cambio.", formNote: "" }
+        { label: "Asunto demasiado genérico ('Ecogo')", aiVerdict: "warn", verdict: "bad", note: "El asunto no identifica el tema real de la consulta: procedimiento de sustitución de variador y autotuning tras el cambio.", formNote: "Fernando (12 oct 2026): Si el asunto no corresponde a \"Maniobra. Problema\" no es correcto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "En su primera respuesta pública (11:51:36-11:51:44) Michael escribe 'buenos dias adrian' / 'mi nombre es michael'.", formNote: "" }
@@ -2517,7 +2521,7 @@ function ticket18956(){
     puntos: 1.2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto coherente con el contenido", aiVerdict: "good", verdict: "good", note: "El asunto 'CallmyLift' es coherente con el contenido: activación de la función Call My Lift para un cliente de Forte Lift Services que reporta que 'nothing happened' al intentar activarla.", formNote: "" }
+        { label: "Asunto coherente con el contenido", aiVerdict: "good", verdict: "bad", note: "El asunto 'CallmyLift' es coherente con el contenido: activación de la función Call My Lift para un cliente de Forte Lift Services que reporta que 'nothing happened' al intentar activarla.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "No aplica presentación estándar a cliente final", aiVerdict: "warn", verdict: "warn", note: "La interacción visible es entre Nicklas y un compañero de MP (Amine Laaguidi), no con el cliente final; no hay una apertura de chat en la que corresponda presentarse por nombre.", formNote: "" }
@@ -2541,7 +2545,7 @@ function ticket19239(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico, no describe la petición", aiVerdict: "warn", verdict: "warn", note: "El asunto es el genérico 'Conversación con Steven Lowrey (UK Lift and Escalator)' y no refleja la petición real del cliente: 'send the start up procedure for the to allow for the auto tune of the machine at Merthyr Civic Centre 71/656368' (6:53:41).", formNote: "" }
+        { label: "Asunto genérico, no describe la petición", aiVerdict: "warn", verdict: "bad", note: "El asunto es el genérico 'Conversación con Steven Lowrey (UK Lift and Escalator)' y no refleja la petición real del cliente: 'send the start up procedure for the to allow for the auto tune of the machine at Merthyr Civic Centre 71/656368' (6:53:41).", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "Nicklas se presenta correctamente en su primera respuesta: '(7:26:11) Nicklas Jonsson (MP Sweden): Hello Steven, Nicklas here.'", formNote: "" }
@@ -2565,7 +2569,7 @@ function ticket19198(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "El asunto no cubre toda la evolución del caso", aiVerdict: "warn", verdict: "warn", note: "El asunto 'Ecogo - Fermator VF7+ Relay' recoge parcialmente el tema inicial, pero el hilo evoluciona hacia parámetros de tiempo de puerta abierta y luego a un fallo del display de piso; el ticket además se fusionó con el #19183 ('La solicitud #19183 ... fue cerrada y fusionada en esta solicitud').", formNote: "" }
+        { label: "El asunto no cubre toda la evolución del caso", aiVerdict: "warn", verdict: "good", note: "El asunto 'Ecogo - Fermator VF7+ Relay' recoge parcialmente el tema inicial, pero el hilo evoluciona hacia parámetros de tiempo de puerta abierta y luego a un fallo del display de piso; el ticket además se fusionó con el #19183 ('La solicitud #19183 ... fue cerrada y fusionada en esta solicitud').", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto sigue el formato \"Maniobra. Problema\"; que sea escueto no se penaliza." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación correcta por nombre", aiVerdict: "good", verdict: "good", note: "Nicklas se presenta claramente: '(7:47:17) Nicklas Jonsson (MP Sweden): Hello Lazaros, Nicklas Here.'", formNote: "" }
@@ -2589,6 +2593,7 @@ function ticket19160(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
+        { label: "Asunto por defecto de Zendesk sin editar", aiVerdict: "bad", verdict: "bad", note: "El asunto conserva el texto autogenerado \"Conversación con…\" y no sigue el formato \"Maniobra. Problema\".", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." },
         { label: "Datos de diagnóstico solo en nota interna", aiVerdict: "warn", verdict: "warn", note: "El motivo indicado por el cliente es 'Engine power calibration'; el diagnóstico técnico real (código de error y parámetros) solo queda en una nota interna, no en ningún campo público del ticket.", formNote: "" }
       ]},
       { nombre: "Presentación tras asignación", items: [
@@ -2613,7 +2618,7 @@ function ticket19264(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico no refleja la avería de freno", aiVerdict: "warn", verdict: "warn", note: "El asunto 'Conversación con Andy Kucharski (Cibes Kalea)' es genérico y no refleja el motivo real: ruido del freno ('För jag minska ljudet från bromsen?', 11:20:35).", formNote: "" }
+        { label: "Asunto genérico no refleja la avería de freno", aiVerdict: "warn", verdict: "bad", note: "El asunto 'Conversación con Andy Kucharski (Cibes Kalea)' es genérico y no refleja el motivo real: ruido del freno ('För jag minska ljudet från bromsen?', 11:20:35).", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Toma el relevo sin identificarse por nombre en público", aiVerdict: "warn", verdict: "warn", note: "Nicklas asume el caso de otro agente (nota interna 'HI Javi, I can take over.', 09:46:09) pero en el chat público solo saluda de forma informal: '(11:51:00) Nicklas Jonsson (MP Sweden): Hej Andy Pandy 🙂', sin decir su nombre explícitamente al cliente.", formNote: "" }
@@ -2637,7 +2642,7 @@ function ticket18814(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto excesivamente escueto", aiVerdict: "warn", verdict: "warn", note: "El asunto es solo 'MB', que únicamente cobra sentido a posteriori al confirmarse que la avería es de la tarjeta MB; no aporta contexto adicional en el campo de asunto.", formNote: "" }
+        { label: "Asunto excesivamente escueto", aiVerdict: "warn", verdict: "bad", note: "El asunto es solo 'MB', que únicamente cobra sentido a posteriori al confirmarse que la avería es de la tarjeta MB; no aporta contexto adicional en el campo de asunto.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación por nombre", aiVerdict: "bad", verdict: "bad", note: "Nicklas entra directamente con '(13:57:33) Nicklas Jonsson (MP Sweden): hej' y '(13:57:39) Nicklas Jonsson (MP Sweden): Orer nummer' sin identificarse por su nombre en ningún momento del chat público.", formNote: "" }
@@ -2661,7 +2666,7 @@ function ticket18872(){
     puntos: 5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto claro y coherente con el contenido", aiVerdict: "good", verdict: "good", note: "El asunto 'Malmborgsgatan LINK' identifica bien la ubicación y el sistema afectado, coherente con el fallo reportado: 'Telefon l24a blinkar och och lca går att nå på sigma' (13:01:49).", formNote: "" }
+        { label: "Asunto claro y coherente con el contenido", aiVerdict: "good", verdict: "bad", note: "El asunto 'Malmborgsgatan LINK' identifica bien la ubicación y el sistema afectado, coherente con el fallo reportado: 'Telefon l24a blinkar och och lca går att nå på sigma' (13:01:49).", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Saludo escueto sin nombre explícito", aiVerdict: "warn", verdict: "warn", note: "Nicklas responde con '(13:00:42) Nicklas Jonsson (MP Sweden): Hej Vad är det för problem som du har?' sin mencionar su nombre de forma explícita en el mensaje al cliente.", formNote: "" }
@@ -2685,7 +2690,7 @@ function ticket19035(){
     puntos: 1.4,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico, no refleja la duda real del cliente", aiVerdict: "warn", verdict: "warn", note: "El asunto genérico 'Conversación con Antonio (cibes kalea)' no refleja la duda real; además existe una nota interna previa relevante ('As it is no Sd card in the consol it is not possible to store the file. I also recommend to use the head controller for start up.', 07:38:07) que tampoco se traslada al cliente.", formNote: "" }
+        { label: "Asunto genérico, no refleja la duda real del cliente", aiVerdict: "warn", verdict: "bad", note: "El asunto genérico 'Conversación con Antonio (cibes kalea)' no refleja la duda real; además existe una nota interna previa relevante ('As it is no Sd card in the consol it is not possible to store the file. I also recommend to use the head controller for start up.', 07:38:07) que tampoco se traslada al cliente.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin respuesta pública para evaluar presentación", aiVerdict: "warn", verdict: "warn", note: "No hay ninguna respuesta pública del técnico en todo el ticket; no puede evaluarse si hubo presentación.", formNote: "" }
@@ -2709,7 +2714,7 @@ function ticket19099(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto coherente pero sin reflejar la causa", aiVerdict: "warn", verdict: "warn", note: "El asunto 'Problem med Ljudfil' es coherente con el motivo del cliente, pero la nota interna previa ya anticipaba la causa ('For some reason they could not export the sound file.', 10:21:56) sin que quede reflejada en ningún campo de resolución.", formNote: "" }
+        { label: "Asunto coherente pero sin reflejar la causa", aiVerdict: "warn", verdict: "bad", note: "El asunto 'Problem med Ljudfil' es coherente con el motivo del cliente, pero la nota interna previa ya anticipaba la causa ('For some reason they could not export the sound file.', 10:21:56) sin que quede reflejada en ningún campo de resolución.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin respuesta pública para evaluar presentación", aiVerdict: "warn", verdict: "warn", note: "No existe ninguna respuesta pública del técnico tras la apertura del chat; no se puede evaluar si hubo presentación.", formNote: "" }
@@ -2733,7 +2738,7 @@ function ticket19169(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico pese a que el cliente sí especifica el motivo", aiVerdict: "warn", verdict: "warn", note: "El asunto genérico 'Conversación con Isak Aspebrant (Hissteknik i Göteborg)' no recoge el motivo indicado claramente por el cliente: 'Maximum travel time exceeded 2025 71/656481' (10:33:02).", formNote: "" }
+        { label: "Asunto genérico pese a que el cliente sí especifica el motivo", aiVerdict: "warn", verdict: "bad", note: "El asunto genérico 'Conversación con Isak Aspebrant (Hissteknik i Göteborg)' no recoge el motivo indicado claramente por el cliente: 'Maximum travel time exceeded 2025 71/656481' (10:33:02).", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin respuesta pública para evaluar presentación", aiVerdict: "warn", verdict: "warn", note: "No hay ninguna respuesta pública del técnico en el chat; solo existe una nota interna con el diagnóstico.", formNote: "" }
@@ -2757,7 +2762,7 @@ function ticket18962(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto muy genérico, no describe la avería", aiVerdict: "warn", verdict: "warn", note: "El asunto 'Tester' es muy genérico; el contenido real trata de un fallo durante pruebas de zapata de freno y de tracción, no reflejado en el asunto ni en ninguna tipificación visible.", formNote: "" }
+        { label: "Asunto muy genérico, no describe la avería", aiVerdict: "warn", verdict: "bad", note: "El asunto 'Tester' es muy genérico; el contenido real trata de un fallo durante pruebas de zapata de freno y de tracción, no reflejado en el asunto ni en ninguna tipificación visible.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin respuesta pública en todo el ticket", aiVerdict: "warn", verdict: "warn", note: "No hay ninguna respuesta pública del técnico en ningún momento del ticket, que se extiende dos días solo con notas internas.", formNote: "" }
@@ -2780,7 +2785,7 @@ function ticket20317(){
     puntos: 1.2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject coherente con el contenido técnico", aiVerdict: "good", verdict: "good", note: "El asunto referencia el ascensor de Imperial Hotel y el contenido desarrolla un problema real de inspección/MES: \"we can run on inspection and mes but will not stop on the inspection limit switches\". No hay contradicción entre campos y desarrollo.", formNote: "" }
+        { label: "Subject coherente con el contenido técnico", aiVerdict: "good", verdict: "bad", note: "El asunto referencia el ascensor de Imperial Hotel y el contenido desarrolla un problema real de inspección/MES: \"we can run on inspection and mes but will not stop on the inspection limit switches\". No hay contradicción entre campos y desarrollo.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin interacción pública con cliente final registrada", aiVerdict: "warn", verdict: "warn", note: "Todo el ticket se gestiona mediante notas PRIVADO/NOTA INTERNA entre Ruud Barten y Fernando Becerra; es una consulta técnica internacional (Stannah Lifts) sin ningún mensaje público al cliente final.", formNote: "" }
@@ -2828,7 +2833,7 @@ function ticket20244(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Registro mínimo pero coherente", aiVerdict: "good", verdict: "good", note: "El ticket es muy breve (dos notas) pero el contenido \"EcoGo traction not releveling\" es consistente con la tipificación de parámetros EcoGo.", formNote: "" }
+        { label: "Registro mínimo pero coherente", aiVerdict: "good", verdict: "bad", note: "El ticket es muy breve (dos notas) pero el contenido \"EcoGo traction not releveling\" es consistente con la tipificación de parámetros EcoGo.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin interacción pública con cliente final registrada", aiVerdict: "warn", verdict: "warn", note: "Se trata de una consulta técnica interna entre compañeros MP (MP Liften), resuelta íntegramente en notas privadas, sin chat público.", formNote: "" }
@@ -2852,7 +2857,7 @@ function ticket20242(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Contenido escueto pero coherente con el asunto", aiVerdict: "good", verdict: "good", note: "El asunto solo indica el solicitante, pero el contenido (\"Tune problem with Za and EcoGo Fuji\") aporta tipificación técnica clara.", formNote: "" }
+        { label: "Contenido escueto pero coherente con el asunto", aiVerdict: "good", verdict: "bad", note: "El asunto solo indica el solicitante, pero el contenido (\"Tune problem with Za and EcoGo Fuji\") aporta tipificación técnica clara.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin interacción pública con cliente final registrada", aiVerdict: "warn", verdict: "warn", note: "Es una consulta técnica internacional (Stannah Lifts) resuelta solo con notas internas, sin chat público con el cliente final.", formNote: "" }
@@ -2876,7 +2881,7 @@ function ticket20224(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject coherente con el problema descrito", aiVerdict: "good", verdict: "good", note: "El asunto identifica correctamente la instalación (Imperial Hotel Six Group) y el contenido describe un fallo de software concreto en el Lift 6 Staff lift.", formNote: "" }
+        { label: "Subject coherente con el problema descrito", aiVerdict: "good", verdict: "bad", note: "El asunto identifica correctamente la instalación (Imperial Hotel Six Group) y el contenido describe un fallo de software concreto en el Lift 6 Staff lift.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin interacción pública con cliente final registrada", aiVerdict: "warn", verdict: "warn", note: "Todo el intercambio queda en notas internas de Ruud y Fernando; no hay ningún mensaje público dirigido al cliente final.", formNote: "" }
@@ -2900,7 +2905,7 @@ function ticket20215(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject y contenido alineados", aiVerdict: "good", verdict: "good", note: "El asunto \"Leaking Piston\" se corresponde directamente con el diagnóstico descrito en la nota interna.", formNote: "" }
+        { label: "Subject y contenido alineados", aiVerdict: "good", verdict: "bad", note: "El asunto \"Leaking Piston\" se corresponde directamente con el diagnóstico descrito en la nota interna.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin interacción pública con cliente final registrada", aiVerdict: "warn", verdict: "warn", note: "La consulta se resuelve por completo mediante nota interna de Ruud tras hablar con R&D Hidráulica, sin ningún mensaje público al cliente (Wiish).", formNote: "" }
@@ -2924,7 +2929,7 @@ function ticket20099(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject coherente, pero cierre muy distanciado en el tiempo", aiVerdict: "warn", verdict: "warn", note: "El contenido encaja con el asunto (fallo al pasar a generador), pero la nota de cierre llega 15 días después de la última nota de diagnóstico, lo que dificulta valorar la continuidad del caso.", formNote: "" }
+        { label: "Subject coherente, pero cierre muy distanciado en el tiempo", aiVerdict: "warn", verdict: "bad", note: "El contenido encaja con el asunto (fallo al pasar a generador), pero la nota de cierre llega 15 días después de la última nota de diagnóstico, lo que dificulta valorar la continuidad del caso.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin interacción pública con cliente final registrada", aiVerdict: "warn", verdict: "warn", note: "Toda la gestión consta en notas internas de Ruud; no hay chat público con el cliente final (Stannah Lifts / Springfield Hospital).", formNote: "" }
@@ -2948,16 +2953,16 @@ function ticket20090(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Ticket asignado a Ruud pero gestionado por otro técnico", aiVerdict: "warn", verdict: "warn", note: "El ticket figura asignado a Ruud, pero todo el contenido y el chat público corresponden a Pedro Calvo Estallo; existe una discrepancia entre el campo de asignación y quien realmente trabajó el caso.", formNote: "" }
+        { label: "Asunto sin formato \"Maniobra. Problema\" (\"Bucher Hydraulic\")", aiVerdict: "warn", verdict: "bad", note: "El ticket figura asignado a Ruud, pero todo el contenido y el chat público corresponden a Pedro Calvo Estallo; existe una discrepancia entre el campo de asignación y quien realmente trabajó el caso.", formNote: "Fernando (12 oct 2026): ticket gestionado íntegramente por Pedro; se evalúa a Pedro, no a Ruud. Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
-        { label: "Quien se presenta al cliente es Pedro Calvo, no Ruud", aiVerdict: "warn", verdict: "warn", note: "En el chat público, quien se presenta es Pedro (\"this is Pedro calvo\") y lleva toda la conversación desde el 27/07 a las 10:35 hasta el 28/07 a las 12:47; Ruud no interviene en ningún mensaje público de este ticket.", formNote: "" }
+        { label: "Presentación por nombre (\"this is Pedro calvo\")", aiVerdict: "warn", verdict: "good", note: "En el chat público, quien se presenta es Pedro (\"this is Pedro calvo\") y lleva toda la conversación desde el 27/07 a las 10:35 hasta el 28/07 a las 12:47; Ruud no interviene en ningún mensaje público de este ticket.", formNote: "Fernando (12 oct 2026): ticket gestionado íntegramente por Pedro; se evalúa a Pedro, no a Ruud." }
       ]},
       { nombre: "Gestión de la asistencia", items: [
-        { label: "Toda la asistencia técnica visible la realiza Pedro Calvo", aiVerdict: "warn", verdict: "warn", note: "El diagnóstico remoto vía TeamViewer, la revisión de fotos, la llamada de 6 min 10 s y la prueba de fases del motor las realiza Pedro; no hay ninguna aportación técnica de Ruud visible en el ticket.", formNote: "" }
+        { label: "Diagnóstico completo: TeamViewer, fotos, llamada y prueba de fases del motor", aiVerdict: "warn", verdict: "good", note: "El diagnóstico remoto vía TeamViewer, la revisión de fotos, la llamada de 6 min 10 s y la prueba de fases del motor las realiza Pedro; no hay ninguna aportación técnica de Ruud visible en el ticket.", formNote: "Fernando (12 oct 2026): ticket gestionado íntegramente por Pedro; se evalúa a Pedro, no a Ruud." }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre correcto pero atribuido erróneamente a Ruud", aiVerdict: "warn", verdict: "warn", note: "El cierre está bien justificado: el cliente confirma la solución (\"Ruud has sorted it\") y Pedro agradece y cierra el ticket; sin embargo, quien gestiona y cierra realmente el caso es Pedro Calvo, no Ruud, pese a la única mención de su nombre dentro del mensaje del cliente.", formNote: "" }
+        { label: "Cierre con confirmación del cliente", aiVerdict: "warn", verdict: "good", note: "El cierre está bien justificado: el cliente confirma la solución (\"Ruud has sorted it\") y Pedro agradece y cierra el ticket; sin embargo, quien gestiona y cierra realmente el caso es Pedro Calvo, no Ruud, pese a la única mención de su nombre dentro del mensaje del cliente.", formNote: "Fernando (12 oct 2026): ticket gestionado íntegramente por Pedro; se evalúa a Pedro, no a Ruud." }
       ]}
     ]
   };
@@ -2972,7 +2977,7 @@ function ticket20084(){
     puntos: 1.2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Subject y contenido alineados, con contexto completo", aiVerdict: "good", verdict: "good", note: "El asunto \"Max travel error LVR Bucher\" coincide con el desarrollo, que además aclara correctamente que la instalación es de MP Liften pero el mantenimiento es de I.P. Liften.", formNote: "" }
+        { label: "Subject y contenido alineados, con contexto completo", aiVerdict: "good", verdict: "bad", note: "El asunto \"Max travel error LVR Bucher\" coincide con el desarrollo, que además aclara correctamente que la instalación es de MP Liften pero el mantenimiento es de I.P. Liften.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin interacción pública con cliente final registrada", aiVerdict: "warn", verdict: "warn", note: "El intercambio se produce entre Ruud, Javier Sosa y el compañero, todo en notas internas, sin chat público con el cliente final.", formNote: "" }
@@ -2995,10 +3000,10 @@ function ticket20105(){
     puntos: 1.2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Identificación del caso (Sigma duplex)", aiVerdict: "good", verdict: "good", note: "El problema queda bien identificado desde el inicio: el cliente indica que 'tiene dos ascensores en duplex pero solo ve uno', lo que permite ubicar rápidamente el caso como parametrización Sigma duplex.", formNote: "" }
+        { label: "Identificación del caso (Sigma duplex)", aiVerdict: "good", verdict: "bad", note: "El problema queda bien identificado desde el inicio: el cliente indica que 'tiene dos ascensores en duplex pero solo ve uno', lo que permite ubicar rápidamente el caso como parametrización Sigma duplex.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
-        { label: "Anomalía de atribución: interviene Amine, no Alexis", aiVerdict: "warn", verdict: "warn", note: "El ticket está asignado a Alexis, pero toda la conversación pública la lleva Amine Laaguidi (MP), quien saluda con 'Buenas tardes David, como te podemos ayudar?'. Alexis no interviene en ningún momento del ticket, por lo que Fernando debería confirmar con Alexis si este caso debe excluirse de su evaluación.", formNote: "" }
+        { label: "Anomalía de atribución: interviene Amine, no Alexis", aiVerdict: "warn", verdict: "warn", note: "El ticket está asignado a Alexis, pero toda la conversación pública la lleva Amine Laaguidi (MP), quien saluda con 'Buenas tardes David, como te podemos ayudar?'. Alexis no interviene en ningún momento del ticket, por lo que Fernando debería confirmar con Alexis si este caso debe excluirse de su evaluación.", formNote: "Fernando (24 sep 2026): el ticket debe ser considerado de Amine (error de asignación). Movido a Amine; Amine saluda sin presentarse por su nombre." }
       ]},
       { nombre: "Gestión de la asistencia", items: [
         { label: "Guía paso a paso con capturas de pantalla (realizada por Amine)", aiVerdict: "good", verdict: "good", note: "Se pide la referencia Sigma y se guía paso a paso ('parámetro a activar, número de ascensores, editar y añadir el segundo en el grupo') con capturas de pantalla de apoyo. La gestión técnica es correcta, aunque fue ejecutada por Amine y no por Alexis.", formNote: "" }
@@ -3019,7 +3024,7 @@ function ticket20004(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Identificación técnica correcta (bus/codificador)", aiVerdict: "good", verdict: "good", note: "El asunto 'Mise en service - 71/652832' y el planteamiento inicial de un problema de bus/codificador permiten ubicar el caso de forma precisa desde el primer mensaje.", formNote: "" }
+        { label: "Identificación técnica correcta (bus/codificador)", aiVerdict: "good", verdict: "bad", note: "El asunto 'Mise en service - 71/652832' y el planteamiento inicial de un problema de bus/codificador permiten ubicar el caso de forma precisa desde el primer mensaje.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Presentación explícita de Alexis", aiVerdict: "good", verdict: "good", note: "Alexis Didelot se presenta claramente al iniciar la conversación: 'Salut Yannick' / 'c'est Alexis', dejando sin ambigüedad quién atiende el caso.", formNote: "" }
@@ -3043,16 +3048,16 @@ function ticket19736(){
     puntos: 2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Identificación del caso (carte LINK)", aiVerdict: "good", verdict: "good", note: "El asunto 'Carte LINK - 71/648790' identifica correctamente el equipo y la referencia del caso, aunque toda la resolución quedó documentada solo mediante nota interna.", formNote: "" }
+        { label: "Identificación del caso (carte LINK)", aiVerdict: "good", verdict: "bad", note: "El asunto 'Carte LINK - 71/648790' identifica correctamente el equipo y la referencia del caso, aunque toda la resolución quedó documentada solo mediante nota interna.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." }
       ]},
       { nombre: "Presentación tras asignación", items: [
-        { label: "Sin presentación pública visible", aiVerdict: "warn", verdict: "warn", note: "El ticket se resolvió íntegramente mediante una nota privada/interna de Alexis Didelot, sin chat público visible en el ticket, por lo que no hay evidencia de que se presentara ante el cliente.", formNote: "" }
+        { label: "Sin presentación pública visible", aiVerdict: "warn", verdict: "good", note: "El ticket se resolvió íntegramente mediante una nota privada/interna de Alexis Didelot, sin chat público visible en el ticket, por lo que no hay evidencia de que se presentara ante el cliente.", formNote: "Fernando (24 sep 2026): ticket resuelto por llamada y cumplimentado después por el técnico; se da por bueno." }
       ]},
       { nombre: "Gestión de la asistencia", items: [
         { label: "Diagnóstico técnico detallado (documentado en nota interna)", aiVerdict: "good", verdict: "good", note: "La nota interna describe un diagnóstico técnico completo: 'le client a retiré la carte LINK car aucun réseau dans le bâtiment... Activation du switch 1 sur la carte ALIM pour activer la résistance de 120ohm sur le CAN Auxiliaire + modifications des paramètres liées au téléphone dans la manœuvre + switch 2 de la carte TEL mis à ON.' La gestión técnica es correcta, aunque no queda constancia pública del intercambio con el cliente.", formNote: "" }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Sin mensaje público ni confirmación de cierre", aiVerdict: "warn", verdict: "warn", note: "No hay mensajes públicos al cliente registrados en el ticket ni confirmación de cierre visible; toda la información quedó únicamente en una nota interna, por lo que no puede verificarse que el cliente haya sido informado o haya confirmado la resolución.", formNote: "" }
+        { label: "Sin mensaje público ni confirmación de cierre", aiVerdict: "warn", verdict: "good", note: "No hay mensajes públicos al cliente registrados en el ticket ni confirmación de cierre visible; toda la información quedó únicamente en una nota interna, por lo que no puede verificarse que el cliente haya sido informado o haya confirmado la resolución.", formNote: "Fernando (24 sep 2026): ticket resuelto por llamada y cumplimentado después por el técnico; se da por bueno." }
       ]}
     ]
   };
@@ -3114,7 +3119,7 @@ function ticket19526(){
     puntos: 1.2,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto genérico", aiVerdict: "warn", verdict: "warn", note: "El asunto \"Conversación con Tim Havers (GEORGI)\" es genérico y no describe la avería (atrapamiento de personas / \"Personeneinschluss\") reportada por el cliente.", formNote: "" }
+        { label: "Asunto genérico", aiVerdict: "warn", verdict: "bad", note: "El asunto \"Conversación con Tim Havers (GEORGI)\" es genérico y no describe la avería (atrapamiento de personas / \"Personeneinschluss\") reportada por el cliente.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Sin presentación explícita por nombre", aiVerdict: "warn", verdict: "warn", note: "Christopher solo saluda brevemente (\"Hi Tim\") antes de pasar a una llamada telefónica; no hay una presentación explícita por nombre en el chat escrito.", formNote: "" }
@@ -3123,7 +3128,7 @@ function ticket19526(){
         { label: "Resumen técnico tras la llamada", aiVerdict: "good", verdict: "good", note: "Tras la llamada, Christopher documenta por escrito el trabajo realizado: cambio del parámetro 38007 de 455 a 4551 (por tratarse de un hidráulico) y, por el error 12.45 de temperatura de motor, la creación de una conexión de masa entre GND y TS2.", formNote: "" }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre sin confirmación escrita del cliente", aiVerdict: "warn", verdict: "warn", note: "Christopher cierra inmediatamente tras resumir el diagnóstico: \"Da ihre Anfrage gelöst wurde wird das Ticket geschlossen\"; la resolución se gestionó por teléfono y el cliente nunca confirma por escrito que el ascensor quedó funcionando.", formNote: "" }
+        { label: "Cierre sin confirmación escrita del cliente", aiVerdict: "warn", verdict: "good", note: "Christopher cierra inmediatamente tras resumir el diagnóstico: \"Da ihre Anfrage gelöst wurde wird das Ticket geschlossen\"; la resolución se gestionó por teléfono y el cliente nunca confirma por escrito que el ascensor quedó funcionando.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]}
     ]
   };
@@ -3138,16 +3143,17 @@ function ticket19102(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Sin registro público en el ticket", aiVerdict: "warn", verdict: "warn", note: "El ticket se resolvió íntegramente por teléfono; las únicas constancias son dos notas privadas de Christopher, sin chat público visible para el cliente.", formNote: "" }
+        { label: "Asunto sin formato \"Maniobra. Problema\"", aiVerdict: "bad", verdict: "bad", note: "El asunto \"Drive 10 einstellungen\" no indica la maniobra.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: el asunto no sigue el formato \"Maniobra. Problema\" — incorrecto." },
+        { label: "Sin registro público en el ticket", aiVerdict: "warn", verdict: "good", note: "El ticket se resolvió íntegramente por teléfono; las únicas constancias son dos notas privadas de Christopher, sin chat público visible para el cliente.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]},
       { nombre: "Presentación tras asignación", items: [
-        { label: "Presentación no evaluable (sin chat público)", aiVerdict: "warn", verdict: "warn", note: "No hay chat público ni presentación visible: todo el intercambio con el cliente fue telefónico y no quedó registrado, por lo que este aspecto no puede evaluarse como correctamente ejecutado.", formNote: "" }
+        { label: "Presentación no evaluable (sin chat público)", aiVerdict: "warn", verdict: "good", note: "No hay chat público ni presentación visible: todo el intercambio con el cliente fue telefónico y no quedó registrado, por lo que este aspecto no puede evaluarse como correctamente ejecutado.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]},
       { nombre: "Gestión de la asistencia", items: [
         { label: "Diagnóstico documentado en nota privada", aiVerdict: "good", verdict: "good", note: "Christopher documenta la causa y la solución en nota privada: \"Problem war für den Monteur eine fehlende anleitung für den neuen DRIVE 10 FU. Anleitung versendet und Parameter einstellungen gemäß Handbuch durchgeführt.\".", formNote: "" }
       ]},
       { nombre: "Despedida y cierre", items: [
-        { label: "Cierre sin evidencia escrita de despedida", aiVerdict: "warn", verdict: "warn", note: "La única constancia del cierre es la nota privada \"Anfrage wurde Telefonisch gelöst\"; no hay despedida ni confirmación del cliente visible en el ticket.", formNote: "" }
+        { label: "Cierre sin evidencia escrita de despedida", aiVerdict: "warn", verdict: "good", note: "La única constancia del cierre es la nota privada \"Anfrage wurde Telefonisch gelöst\"; no hay despedida ni confirmación del cliente visible en el ticket.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: sin transcripción de la llamada, se da por resuelto si el resto de la conversación no dice lo contrario." }
       ]}
     ]
   };
@@ -3162,7 +3168,7 @@ function ticket18998(){
     puntos: 1.5,
     aspectos: [
       { nombre: "Campos del ticket", items: [
-        { label: "Asunto no descriptivo de la avería", aiVerdict: "warn", verdict: "warn", note: "El asunto \"Envío plantilla Whatsapp - Gespräch_beginnen_de\" no refleja el problema real reportado (fallo de la liberación manual de emergencia), sino un artefacto de la plantilla de WhatsApp.", formNote: "" }
+        { label: "Asunto no descriptivo de la avería", aiVerdict: "warn", verdict: "bad", note: "El asunto \"Envío plantilla Whatsapp - Gespräch_beginnen_de\" no refleja el problema real reportado (fallo de la liberación manual de emergencia), sino un artefacto de la plantilla de WhatsApp.", formNote: "Criterio Fernando (12 oct 2026), aplicado por Claude: asunto por defecto de Zendesk sin editar — siempre negativo." }
       ]},
       { nombre: "Presentación tras asignación", items: [
         { label: "Christopher no se presenta al retomar el ticket", aiVerdict: "bad", verdict: "bad", note: "Quien responde primero es Carlos Perez Osuna, no Christopher, quien realiza el diagnóstico inicial y se despide de turno (\"Ich muss mich jetzt verabschieden. Bitte arbeite in diesem Ticket weiter, mein Kollege vom Bereitschaftsdienst wird dir weiterhelfen.\"); al día siguiente Christopher retoma el caso sin presentarse por nombre, solo escribe \"Guten Morgen Willi bitte melde dich\".", formNote: "" }
@@ -3179,17 +3185,17 @@ function ticket18998(){
 
 const DATA = {}; // nombre -> array de tickets (evaluados)
 // Muestra de julio 2026, n=12/tecnico (re-muestreo 14-15 sep 2026), evaluada por Claude el 15 sep 2026.
-DATA["Amine"]      = [ticket19712(), ticket18916(), ticket19449(), ticket20048(), ticket19913(), ticket19382(), ticket18803(), ticket20204(), ticket18955(), ticket19810(), ticket19203(), ticket20247()];
+DATA["Amine"]      = [ticket19712(), ticket18916(), ticket19449(), ticket20048(), ticket19913(), ticket19382(), ticket18803(), ticket20204(), ticket18955(), ticket19810(), ticket19203(), ticket20247(), ticket20105()];
 DATA["Mar"]      = [ticket18943(), ticket19297(), ticket19873(), ticket19783(), ticket18974(), ticket19271(), ticket19282(), ticket20109(), ticket19827(), ticket19216(), ticket20159(), ticket19190()];
 DATA["Javier"]      = [ticket18886(), ticket19866(), ticket19953(), ticket18992(), ticket18983(), ticket18853(), ticket19777(), ticket20346(), ticket20148(), ticket19863(), ticket18800(), ticket19529()];
-DATA["Pedro"]      = [ticket19859(), ticket19586(), ticket19994(), ticket19604(), ticket19769(), ticket19549(), ticket19951(), ticket19564(), ticket19822(), ticket19755(), ticket20162(), ticket19896()];
+DATA["Pedro"]      = [ticket19859(), ticket19586(), ticket19994(), ticket19604(), ticket19769(), ticket19549(), ticket19951(), ticket19564(), ticket19822(), ticket19755(), ticket20162(), ticket19896(), ticket20090()];
 DATA["Carlos"]      = [ticket19446(), ticket19166(), ticket19212(), ticket19542(), ticket19413(), ticket18988(), ticket19313(), ticket19331(), ticket19644(), ticket18996(), ticket19570(), ticket19178()];
 DATA["Eduardo"]      = [ticket19340(), ticket19122(), ticket20168(), ticket18877(), ticket19910(), ticket19944(), ticket19728(), ticket20101(), ticket19752(), ticket18885(), ticket20241(), ticket20034()];
 DATA["Raidel"]      = [ticket19301(), ticket19324(), ticket19978(), ticket19456(), ticket19118(), ticket19275(), ticket19330(), ticket18869(), ticket18873(), ticket19400(), ticket18875(), ticket20225()];
 DATA["Michael"]      = [ticket20282(), ticket20329(), ticket20001(), ticket19277(), ticket20301(), ticket18829(), ticket19933(), ticket18848(), ticket20219(), ticket20289(), ticket20367(), ticket18927()];
 DATA["Nicklas"]      = [ticket18832(), ticket18956(), ticket19239(), ticket19198(), ticket19160(), ticket19264(), ticket18814(), ticket18872(), ticket19035(), ticket19099(), ticket19169(), ticket18962()];
-DATA["Ruud"]      = [ticket20317(), ticket20277(), ticket20244(), ticket20242(), ticket20224(), ticket20215(), ticket20099(), ticket20090(), ticket20084()];
-DATA["Alexis"]      = [ticket20105(), ticket20004(), ticket19736()];
+DATA["Ruud"]      = [ticket20317(), ticket20277(), ticket20244(), ticket20242(), ticket20224(), ticket20215(), ticket20099(), ticket20084()];
+DATA["Alexis"]      = [ticket20004(), ticket19736()];
 DATA["Christopher"]      = [ticket20040(), ticket19956(), ticket19526(), ticket19102(), ticket18998()];
 // Ruud y Alexis conservan sus tickets con anomalia de atribucion (#20090 y #20105) marcados como "warn" con nota explicita en el propio ticket, en vez de excluirse de antemano como en la ronda anterior -- se decide tras la revision individual de Fernando con cada tecnico.
 // Sella el veredicto original de la IA en cada item (para poder detectar correcciones tuyas)
@@ -3240,8 +3246,8 @@ function trItemField(t, ai, ii, field, original){
 const I18N = {
   es: {
     title: "Calidad de los tickets cerrados",
-    sub: 'Objetivo 2026\u2011S2 \u00b7 MP Ascensores \u2014 auditor\u00eda mensual de 4 tickets aleatorios por t\u00e9cnico (puntuaci\u00f3n &gt; 1), evaluados contra la r\u00fabrica de calidad. La IA propone el veredicto por cada punto; t\u00fa lo revisas, lo corriges y a\u00f1ades notas de formaci\u00f3n.',
-    banner: '<b>Estado actual:</b> el muestreo mensual es <b>100% autom\u00e1tico</b>: un workflow en n8n recorre los 15 t\u00e9cnicos dados de alta el d\u00eda 1 de cada mes (Zendesk Search API + reglas de <code>canon.js</code> + selecci\u00f3n aleatoria de 4 tickets, o todos si hay menos de 4 con puntuaci\u00f3n &gt;1), guarda todo y me env\u00eda un \u00fanico email que leo yo solo, sin que tengas que copiar ni pegar nada. Julio 2026 ya tiene muestra real para 12 de los 15 t\u00e9cnicos (los otros 3 no tuvieron tickets con puntos&gt;1 ese mes). Las notas de formaci\u00f3n que dejes abajo tambi\u00e9n se guardan solas al pulsar "Guardar".',
+    sub: 'Objetivo 2026\u2011S2 \u00b7 MP Ascensores \u2014 auditor\u00eda mensual de 12 tickets aleatorios por t\u00e9cnico (puntuaci\u00f3n &gt; 1), evaluados contra la r\u00fabrica de calidad. La IA propone el veredicto por cada punto; t\u00fa lo revisas, lo corriges y a\u00f1ades notas de formaci\u00f3n.',
+    banner: '<b>Estado actual:</b> el muestreo mensual es <b>100% autom\u00e1tico</b>: un workflow en n8n recorre los 15 t\u00e9cnicos dados de alta el d\u00eda 1 de cada mes (Zendesk Search API + reglas de <code>canon.js</code> + selecci\u00f3n aleatoria de 12 tickets, o todos si hay menos de 12 con puntuaci\u00f3n &gt;1), guarda todo y me env\u00eda un \u00fanico email que leo yo solo, sin que tengas que copiar ni pegar nada. Julio 2026 ya tiene muestra real para 12 de los 15 t\u00e9cnicos (los otros 3 no tuvieron tickets con puntos&gt;1 ese mes). Las notas de formaci\u00f3n que dejes abajo tambi\u00e9n se guardan solas al pulsar "Guardar".',
     summaryTitle: "Resultado por t\u00e9cnico",
     thTecnico: "T\u00e9cnico", thPeso: "Peso", thMin: "Min", thTarget: "Target", thMax: "M\u00e1x",
     thTickets: "Tickets evaluados", thResultado: "Resultado", thPct: "% Consec.",
@@ -3267,8 +3273,8 @@ const I18N = {
   },
   en: {
     title: "Quality of closed tickets",
-    sub: '2026\u2011H2 objective \u00b7 MP Ascensores \u2014 monthly audit of 4 random tickets per technician (score &gt; 1), evaluated against the quality rubric. The AI proposes a verdict for each point; you review it, correct it and add training notes.',
-    banner: '<b>Current status:</b> the monthly sampling is <b>100% automatic</b>: an n8n workflow goes through the 15 technicians onboarded on the 1st of each month (Zendesk Search API + <code>canon.js</code> rules + random selection of 4 tickets, or all of them if there are fewer than 4 with score &gt;1), saves everything and sends me a single email that I read on my own, with no copy/pasting needed from you. July 2026 already has a real sample for 12 of the 15 technicians (the other 3 had no tickets with score&gt;1 that month). The training notes you leave below are also saved automatically when you click "Save".',
+    sub: '2026\u2011H2 objective \u00b7 MP Ascensores \u2014 monthly audit of 12 random tickets per technician (score &gt; 1), evaluated against the quality rubric. The AI proposes a verdict for each point; you review it, correct it and add training notes.',
+    banner: '<b>Current status:</b> the monthly sampling is <b>100% automatic</b>: an n8n workflow goes through the 15 technicians onboarded on the 1st of each month (Zendesk Search API + <code>canon.js</code> rules + random selection of 12 tickets, or all of them if there are fewer than 12 with score &gt;1), saves everything and sends me a single email that I read on my own, with no copy/pasting needed from you. July 2026 already has a real sample for 12 of the 15 technicians (the other 3 had no tickets with score&gt;1 that month). The training notes you leave below are also saved automatically when you click "Save".',
     summaryTitle: "Result by technician",
     thTecnico: "Technician", thPeso: "Weight", thMin: "Min", thTarget: "Target", thMax: "Max",
     thTickets: "Tickets evaluated", thResultado: "Result", thPct: "% Attainment",
@@ -3362,7 +3368,7 @@ function renderSummary(){
       <td class="num">${t.min}</td>
       <td class="num">${t.target}</td>
       <td class="num">${t.max}</td>
-      <td class="num">${n}/4</td>
+      <td class="num">${n}</td>
       <td class="num">${res!==null?res:'—'}</td>
       <td class="num"><span class="badge ${badgeClass}">${badgeTxt}</span></td>
     </tr>`;
@@ -3435,7 +3441,7 @@ function renderTickets(){
       </div>
     </div>`;
   });
-  const missing = 4 - tickets.length;
+  const missing = 0; // n=12 por técnico, o todos los válidos si hay menos
   for(let i=0;i<missing;i++){
     html += `<div class="empty-slot">
       <span>${s.emptySlotPrefix} ${tickets.length+i+1} ${s.emptySlotMid} ${sel}</span>
